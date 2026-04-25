@@ -14,7 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_history: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          branch: string | null
+          career_goal: string | null
+          college: string | null
+          created_at: string
+          current_skills: string[] | null
+          email: string | null
+          full_name: string | null
+          id: string
+          interests: string[] | null
+          onboarded: boolean
+          streak: number
+          theme: string
+          updated_at: string
+          user_id: string
+          xp: number
+          year: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          branch?: string | null
+          career_goal?: string | null
+          college?: string | null
+          created_at?: string
+          current_skills?: string[] | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          interests?: string[] | null
+          onboarded?: boolean
+          streak?: number
+          theme?: string
+          updated_at?: string
+          user_id: string
+          xp?: number
+          year?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          branch?: string | null
+          career_goal?: string | null
+          college?: string | null
+          created_at?: string
+          current_skills?: string[] | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          interests?: string[] | null
+          onboarded?: boolean
+          streak?: number
+          theme?: string
+          updated_at?: string
+          user_id?: string
+          xp?: number
+          year?: string | null
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          item_id: string
+          item_name: string | null
+          item_type: string
+          metadata: Json | null
+          progress: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          item_id: string
+          item_name?: string | null
+          item_type: string
+          metadata?: Json | null
+          progress?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_name?: string | null
+          item_type?: string
+          metadata?: Json | null
+          progress?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
