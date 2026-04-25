@@ -3,7 +3,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, BookOpen, Award, Flame, ArrowRight, Sparkles, Target, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { userProfile, stats, careerPaths, milestones, roadmap } from "@/lib/mockData";
+import { stats, careerPaths, milestones, roadmap } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const StatCard = ({ icon: Icon, label, value, accent }: any) => (
   <div className="glass-card p-5 glow-hover animate-slide-up">
@@ -20,9 +21,11 @@ const StatCard = ({ icon: Icon, label, value, accent }: any) => (
 );
 
 export default function Dashboard() {
+  const { profile } = useAuth();
   const topCareer = careerPaths[0];
   const completedMilestones = milestones.filter(m => m.done).length;
   const progressPct = (completedMilestones / milestones.length) * 100;
+  const firstName = profile?.full_name?.split(" ")[0] || "there";
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -34,7 +37,7 @@ export default function Dashboard() {
             <Sparkles className="w-4 h-4" /> Welcome back
           </div>
           <h1 className="text-3xl md:text-4xl font-bold">
-            Hi, <span className="gradient-text">{userProfile.name.split(" ")[0]}</span> 👋
+            Hi, <span className="gradient-text">{firstName}</span> 👋
           </h1>
           <p className="text-muted-foreground mt-2 max-w-xl">
             You're <span className="text-primary font-semibold">{topCareer.match}%</span> matched for <span className="text-foreground font-semibold">{topCareer.title}</span>. Keep building your skills!
