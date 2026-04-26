@@ -1,12 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft } from "lucide-react";
+import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft, Sparkles } from "lucide-react";
 import { careerPaths, type CareerPath } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CareerPaths() {
   const [selected, setSelected] = useState<CareerPath | null>(null);
+  const { profile } = useAuth();
+  const [filter, setFilter] = useState<"recommended" | "all">("recommended");
+
+  // Map full branch name → short tag used in mockData (e.g. "Mechanical Engineering" → "Mechanical")
+  const branchTag = useMemo(() => {
+    const b = profile?.branch || "";
+    if (b.includes("Computer") || b.includes("Information")) return "Computer";
+    if (b.includes("Mechanical")) return "Mechanical";
+    if (b.includes("Civil")) return "Civil";
+    if (b.includes("Electrical")) return "Electrical";
+    if (b.includes("Electronics")) return "Electronics";
+    if (b.includes("Chemical")) return "Chemical";
+    return "";
+  }, [profile?.branch]);
+
+  const visiblePaths = useMemo(() => {
+    if (filter === "all" || !branchTag) return careerPaths;
+    const matched = careerPaths.filter((c) => c.branches.includes(branchTag));
+    return matched.length ? matched : careerPaths;
+  }, [filter, branchTag]);
 
   if (selected) {
     return (
