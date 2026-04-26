@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, KeyboardEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Sparkles, ArrowRight, Loader2, Check } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +11,29 @@ import { toast } from "sonner";
 
 const BRANCHES = ["Computer Engineering", "Information Technology", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics & Communication", "Chemical Engineering", "Other"];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Recent Graduate"];
-const SKILLS = ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "Git", "AutoCAD", "MATLAB", "Solidworks", "AWS", "Docker", "Linux"];
-const INTERESTS = ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Robotics", "IoT", "Game Dev", "Blockchain", "Embedded Systems", "Renewable Energy", "Structural Design", "Power Systems"];
+
+// Branch-specific suggested skills — students can also add custom ones
+const SKILLS_BY_BRANCH: Record<string, string[]> = {
+  "Computer Engineering": ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "Git", "AWS", "Docker", "Linux", "DSA"],
+  "Information Technology": ["Python", "JavaScript", "SQL", "Networking", "Linux", "AWS", "Cybersecurity", "Git", "React", "DevOps"],
+  "Mechanical Engineering": ["AutoCAD", "SolidWorks", "CATIA", "ANSYS", "MATLAB", "Thermodynamics", "CNC", "3D Printing", "GD&T", "Fusion 360"],
+  "Civil Engineering": ["AutoCAD", "STAAD Pro", "Revit", "ETABS", "Primavera", "MS Project", "Surveying", "BIM", "GIS", "Estimation"],
+  "Electrical Engineering": ["MATLAB", "Simulink", "PLC", "SCADA", "Power Systems", "AutoCAD Electrical", "ETAP", "Embedded C", "Arduino", "PCB Design"],
+  "Electronics & Communication": ["VLSI", "Verilog", "MATLAB", "Embedded C", "Arduino", "Raspberry Pi", "PCB Design", "DSP", "IoT", "RF Design"],
+  "Chemical Engineering": ["Aspen Plus", "MATLAB", "HYSYS", "Process Simulation", "AutoCAD", "Lab Techniques", "Six Sigma", "HAZOP"],
+  "Other": ["Python", "MS Excel", "MATLAB", "AutoCAD", "Communication", "Project Management"],
+};
+
+const INTERESTS_BY_BRANCH: Record<string, string[]> = {
+  "Computer Engineering": ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Game Dev", "Blockchain", "DevOps"],
+  "Information Technology": ["Cybersecurity", "Cloud Computing", "Data Science", "Networking", "Web Development", "DevOps", "AI/ML"],
+  "Mechanical Engineering": ["Automotive Design", "Robotics", "CAD/CAM", "Manufacturing", "HVAC", "Aerospace", "Product Design", "Renewable Energy"],
+  "Civil Engineering": ["Structural Design", "Construction Management", "Transportation", "Smart Cities", "BIM", "Geotechnical", "Environmental"],
+  "Electrical Engineering": ["Power Systems", "Renewable Energy", "Embedded Systems", "Robotics", "EV Technology", "Smart Grid", "Industrial Automation"],
+  "Electronics & Communication": ["VLSI Design", "IoT", "Embedded Systems", "Robotics", "5G/Telecom", "Signal Processing", "Robotics", "Wearable Tech"],
+  "Chemical Engineering": ["Process Engineering", "Petrochemicals", "Pharmaceuticals", "Environmental", "Materials", "Food Tech", "Renewable Energy"],
+  "Other": ["AI/ML", "Project Management", "Research", "Entrepreneurship", "Data Analysis"],
+};
 
 export default function Onboarding() {
   const navigate = useNavigate();
