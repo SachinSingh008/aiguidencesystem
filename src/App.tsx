@@ -18,6 +18,7 @@ import MockTests from "./pages/MockTests";
 import ProgressPage from "./pages/ProgressPage";
 import Resume from "./pages/Resume";
 import Settings from "./pages/Settings";
+import StudyMaterial from "./pages/StudyMaterial";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/career-paths" element={<CareerPaths />} />
                 <Route path="/skill-gap" element={<SkillGap />} />
                 <Route path="/courses" element={<Courses />} />
+                <Route path="/study-material" element={<StudyMaterial />} />
                 <Route path="/mock-tests" element={<MockTests />} />
                 <Route path="/progress" element={<ProgressPage />} />
                 <Route path="/resume" element={<Resume />} />

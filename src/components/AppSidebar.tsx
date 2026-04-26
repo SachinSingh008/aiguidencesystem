@@ -1,12 +1,13 @@
-import { LayoutDashboard, Compass, Target, BookOpen, FileText, ClipboardCheck, TrendingUp, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, Compass, Target, BookOpen, FileText, ClipboardCheck, TrendingUp, Settings, Sparkles, Library } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar, SidebarHeader } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Career Paths", url: "/career-paths", icon: Compass },
   { title: "Skill Gap", url: "/skill-gap", icon: Target },
   { title: "Courses", url: "/courses", icon: BookOpen },
+  { title: "Study Material", url: "/study-material", icon: Library },
   { title: "Resume Builder", url: "/resume", icon: FileText },
   { title: "Mock Tests", url: "/mock-tests", icon: ClipboardCheck },
   { title: "Progress", url: "/progress", icon: TrendingUp },
@@ -41,7 +42,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="h-11">
                     <NavLink
                       to={item.url}
-                      end={item.url === "/"}
+                      end={item.url === "/dashboard"}
                       className="flex items-center gap-3 rounded-lg transition-all hover:bg-sidebar-accent text-sidebar-foreground"
                       activeClassName="bg-gradient-primary text-primary-foreground shadow-md hover:bg-gradient-primary"
                     >

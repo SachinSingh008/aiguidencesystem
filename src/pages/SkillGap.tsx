@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Target, BookOpen, ClipboardCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import { skillGaps } from "@/lib/mockData";
+import { useNavigate } from "react-router-dom";
 
 export default function SkillGap() {
+  const navigate = useNavigate();
   const missing = skillGaps.filter(s => s.status === "missing").length;
   const inProgress = skillGaps.filter(s => s.status === "in-progress").length;
   const complete = skillGaps.filter(s => s.status === "complete").length;
@@ -67,10 +68,10 @@ export default function SkillGap() {
                   <span className="text-sm text-muted-foreground">{s.current}% / {s.required}%</span>
                   {s.status !== "complete" && (
                     <div className="flex gap-1.5">
-                      <Button size="sm" variant="outline" className="h-7 text-xs">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate("/courses")}>
                         <BookOpen className="w-3 h-3 mr-1" /> Learn
                       </Button>
-                      <Button size="sm" className="h-7 text-xs bg-gradient-primary">
+                      <Button size="sm" className="h-7 text-xs bg-gradient-primary" onClick={() => navigate("/mock-tests")}>
                         <ClipboardCheck className="w-3 h-3 mr-1" /> Test
                       </Button>
                     </div>
