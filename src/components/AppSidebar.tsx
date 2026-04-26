@@ -1,12 +1,13 @@
-import { LayoutDashboard, Compass, Target, BookOpen, FileText, ClipboardCheck, TrendingUp, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, Compass, Target, BookOpen, FileText, ClipboardCheck, TrendingUp, Settings, Sparkles, Library } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar, SidebarHeader } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Career Paths", url: "/career-paths", icon: Compass },
   { title: "Skill Gap", url: "/skill-gap", icon: Target },
   { title: "Courses", url: "/courses", icon: BookOpen },
+  { title: "Study Material", url: "/study-material", icon: Library },
   { title: "Resume Builder", url: "/resume", icon: FileText },
   { title: "Mock Tests", url: "/mock-tests", icon: ClipboardCheck },
   { title: "Progress", url: "/progress", icon: TrendingUp },
