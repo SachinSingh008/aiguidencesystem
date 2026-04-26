@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Target, BookOpen, ClipboardCheck, AlertCircle, CheckCircle2 } from "lucide-react";
 import { skillGaps } from "@/lib/mockData";
+import { useNavigate } from "react-router-dom";
 
 export default function SkillGap() {
   const missing = skillGaps.filter(s => s.status === "missing").length;
