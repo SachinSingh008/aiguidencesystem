@@ -42,7 +42,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild className="h-11">
                     <NavLink
                       to={item.url}
-                      end={item.url === "/"}
+                      end={item.url === "/dashboard"}
                       className="flex items-center gap-3 rounded-lg transition-all hover:bg-sidebar-accent text-sidebar-foreground"
                       activeClassName="bg-gradient-primary text-primary-foreground shadow-md hover:bg-gradient-primary"
                     >
