@@ -7,8 +7,8 @@ const ThemeContext = createContext<Ctx>({ theme: "dark", toggle: () => {}, setTh
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem("cp-theme") as Theme) || "dark";
+    if (typeof window === "undefined") return "light";
+    return (localStorage.getItem("cp-theme") as Theme) || "light";
   });
 
   useEffect(() => {
