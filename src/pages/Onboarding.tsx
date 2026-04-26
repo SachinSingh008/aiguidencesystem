@@ -63,8 +63,28 @@ export default function Onboarding() {
   if (!loading && !user) return <Navigate to="/auth" replace />;
   if (!loading && profile?.onboarded) return <Navigate to="/dashboard" replace />;
 
+  const [skillInput, setSkillInput] = useState("");
+  const [interestInput, setInterestInput] = useState("");
+
+  const suggestedSkills = useMemo(() => SKILLS_BY_BRANCH[form.branch] || SKILLS_BY_BRANCH["Other"], [form.branch]);
+  const suggestedInterests = useMemo(() => INTERESTS_BY_BRANCH[form.branch] || INTERESTS_BY_BRANCH["Other"], [form.branch]);
+
   const toggle = (key: "current_skills" | "interests", val: string) => {
     setForm((f) => ({ ...f, [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val] }));
+  };
+
+  const addCustom = (key: "current_skills" | "interests", val: string, reset: () => void) => {
+    const v = val.trim();
+    if (!v) return;
+    setForm((f) => f[key].includes(v) ? f : { ...f, [key]: [...f[key], v] });
+    reset();
+  };
+
+  const onCustomKey = (e: KeyboardEvent<HTMLInputElement>, key: "current_skills" | "interests", val: string, reset: () => void) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addCustom(key, val.replace(",", ""), reset);
+    }
   };
 
   const next = () => {
