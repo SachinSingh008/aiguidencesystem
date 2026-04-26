@@ -18,6 +18,7 @@ import MockTests from "./pages/MockTests";
 import ProgressPage from "./pages/ProgressPage";
 import Resume from "./pages/Resume";
 import Settings from "./pages/Settings";
+import StudyMaterial from "./pages/StudyMaterial";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
