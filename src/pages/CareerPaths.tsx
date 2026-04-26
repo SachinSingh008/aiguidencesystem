@@ -1,12 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft } from "lucide-react";
+import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft, Sparkles } from "lucide-react";
 import { careerPaths, type CareerPath } from "@/lib/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CareerPaths() {
   const [selected, setSelected] = useState<CareerPath | null>(null);
+  const { profile } = useAuth();
+  const [filter, setFilter] = useState<"recommended" | "all">("recommended");
+
+  // Map full branch name → short tag used in mockData (e.g. "Mechanical Engineering" → "Mechanical")
+  const branchTag = useMemo(() => {
+    const b = profile?.branch || "";
+    if (b.includes("Computer") || b.includes("Information")) return "Computer";
+    if (b.includes("Mechanical")) return "Mechanical";
+    if (b.includes("Civil")) return "Civil";
+    if (b.includes("Electrical")) return "Electrical";
+    if (b.includes("Electronics")) return "Electronics";
+    if (b.includes("Chemical")) return "Chemical";
+    return "";
+  }, [profile?.branch]);
+
+  const visiblePaths = useMemo(() => {
+    if (filter === "all" || !branchTag) return careerPaths;
+    const matched = careerPaths.filter((c) => c.branches.includes(branchTag));
+    return matched.length ? matched : careerPaths;
+  }, [filter, branchTag]);
 
   if (selected) {
     return (
@@ -93,13 +114,35 @@ export default function CareerPaths() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold">AI-Recommended Career Paths</h1>
-        <p className="text-muted-foreground mt-1">Click any path to explore its full roadmap</p>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">AI-Recommended Career Paths</h1>
+          <p className="text-muted-foreground mt-1">
+            {branchTag
+              ? <>Personalized for <span className="text-foreground font-medium">{profile?.branch}</span> students. Click any path to explore its full roadmap.</>
+              : "Click any path to explore its full roadmap"}
+          </p>
+        </div>
+        {branchTag && (
+          <div className="flex gap-2 p-1 rounded-full bg-secondary border border-border">
+            <button
+              onClick={() => setFilter("recommended")}
+              className={`px-4 py-1.5 text-sm rounded-full transition flex items-center gap-1.5 ${filter === "recommended" ? "bg-gradient-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> For my branch
+            </button>
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-4 py-1.5 text-sm rounded-full transition ${filter === "all" ? "bg-gradient-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              All paths
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {careerPaths.map((c, i) => (
+        {visiblePaths.map((c, i) => (
           <Card
             key={c.id}
             className="glass-card p-6 glow-hover border-border/50 animate-slide-up cursor-pointer"

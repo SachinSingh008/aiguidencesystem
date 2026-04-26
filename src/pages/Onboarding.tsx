@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, KeyboardEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Sparkles, ArrowRight, Loader2, Check } from "lucide-react";
+import { Sparkles, ArrowRight, Loader2, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,8 +11,29 @@ import { toast } from "sonner";
 
 const BRANCHES = ["Computer Engineering", "Information Technology", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics & Communication", "Chemical Engineering", "Other"];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Recent Graduate"];
-const SKILLS = ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "Git", "AutoCAD", "MATLAB", "Solidworks", "AWS", "Docker", "Linux"];
-const INTERESTS = ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Robotics", "IoT", "Game Dev", "Blockchain", "Embedded Systems", "Renewable Energy", "Structural Design", "Power Systems"];
+
+// Branch-specific suggested skills — students can also add custom ones
+const SKILLS_BY_BRANCH: Record<string, string[]> = {
+  "Computer Engineering": ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "Git", "AWS", "Docker", "Linux", "DSA"],
+  "Information Technology": ["Python", "JavaScript", "SQL", "Networking", "Linux", "AWS", "Cybersecurity", "Git", "React", "DevOps"],
+  "Mechanical Engineering": ["AutoCAD", "SolidWorks", "CATIA", "ANSYS", "MATLAB", "Thermodynamics", "CNC", "3D Printing", "GD&T", "Fusion 360"],
+  "Civil Engineering": ["AutoCAD", "STAAD Pro", "Revit", "ETABS", "Primavera", "MS Project", "Surveying", "BIM", "GIS", "Estimation"],
+  "Electrical Engineering": ["MATLAB", "Simulink", "PLC", "SCADA", "Power Systems", "AutoCAD Electrical", "ETAP", "Embedded C", "Arduino", "PCB Design"],
+  "Electronics & Communication": ["VLSI", "Verilog", "MATLAB", "Embedded C", "Arduino", "Raspberry Pi", "PCB Design", "DSP", "IoT", "RF Design"],
+  "Chemical Engineering": ["Aspen Plus", "MATLAB", "HYSYS", "Process Simulation", "AutoCAD", "Lab Techniques", "Six Sigma", "HAZOP"],
+  "Other": ["Python", "MS Excel", "MATLAB", "AutoCAD", "Communication", "Project Management"],
+};
+
+const INTERESTS_BY_BRANCH: Record<string, string[]> = {
+  "Computer Engineering": ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Game Dev", "Blockchain", "DevOps"],
+  "Information Technology": ["Cybersecurity", "Cloud Computing", "Data Science", "Networking", "Web Development", "DevOps", "AI/ML"],
+  "Mechanical Engineering": ["Automotive Design", "Robotics", "CAD/CAM", "Manufacturing", "HVAC", "Aerospace", "Product Design", "Renewable Energy"],
+  "Civil Engineering": ["Structural Design", "Construction Management", "Transportation", "Smart Cities", "BIM", "Geotechnical", "Environmental"],
+  "Electrical Engineering": ["Power Systems", "Renewable Energy", "Embedded Systems", "Robotics", "EV Technology", "Smart Grid", "Industrial Automation"],
+  "Electronics & Communication": ["VLSI Design", "IoT", "Embedded Systems", "Robotics", "5G/Telecom", "Signal Processing", "Robotics", "Wearable Tech"],
+  "Chemical Engineering": ["Process Engineering", "Petrochemicals", "Pharmaceuticals", "Environmental", "Materials", "Food Tech", "Renewable Energy"],
+  "Other": ["AI/ML", "Project Management", "Research", "Entrepreneurship", "Data Analysis"],
+};
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -42,8 +63,28 @@ export default function Onboarding() {
   if (!loading && !user) return <Navigate to="/auth" replace />;
   if (!loading && profile?.onboarded) return <Navigate to="/dashboard" replace />;
 
+  const [skillInput, setSkillInput] = useState("");
+  const [interestInput, setInterestInput] = useState("");
+
+  const suggestedSkills = useMemo(() => SKILLS_BY_BRANCH[form.branch] || SKILLS_BY_BRANCH["Other"], [form.branch]);
+  const suggestedInterests = useMemo(() => INTERESTS_BY_BRANCH[form.branch] || INTERESTS_BY_BRANCH["Other"], [form.branch]);
+
   const toggle = (key: "current_skills" | "interests", val: string) => {
     setForm((f) => ({ ...f, [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val] }));
+  };
+
+  const addCustom = (key: "current_skills" | "interests", val: string, reset: () => void) => {
+    const v = val.trim();
+    if (!v) return;
+    setForm((f) => f[key].includes(v) ? f : { ...f, [key]: [...f[key], v] });
+    reset();
+  };
+
+  const onCustomKey = (e: KeyboardEvent<HTMLInputElement>, key: "current_skills" | "interests", val: string, reset: () => void) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addCustom(key, val.replace(",", ""), reset);
+    }
   };
 
   const next = () => {
@@ -124,9 +165,25 @@ export default function Onboarding() {
         {step === 2 && (
           <div className="space-y-5 animate-fade-in">
             <h2 className="text-xl font-semibold">What skills do you already have?</h2>
-            <p className="text-sm text-muted-foreground">Select all that apply. Don't worry, you can add more later.</p>
+            <p className="text-sm text-muted-foreground">
+              Suggestions tailored for <span className="font-medium text-foreground">{form.branch || "your branch"}</span>. Tap to select, or add your own custom skill below.
+            </p>
+
+            {form.current_skills.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-secondary/40 border border-border">
+                {form.current_skills.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-gradient-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() => toggle("current_skills", s)} aria-label={`Remove ${s}`}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
-              {SKILLS.map(s => (
+              {suggestedSkills.map((s) => (
                 <button key={s} type="button" onClick={() => toggle("current_skills", s)}
                   className={`px-4 py-2 rounded-full text-sm border transition-all ${form.current_skills.includes(s) ? "bg-gradient-primary text-primary-foreground border-transparent shadow-md" : "bg-secondary border-border hover:border-primary/50"}`}>
                   {form.current_skills.includes(s) && <Check className="w-3 h-3 inline mr-1" />}
@@ -134,15 +191,46 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+
+            <div>
+              <Label>Add a custom skill</Label>
+              <div className="flex gap-2 mt-1.5">
+                <Input
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => onCustomKey(e, "current_skills", skillInput, () => setSkillInput(""))}
+                  placeholder="e.g. CATIA, Revit, NX CAD, System Testing…"
+                  className="h-11"
+                />
+                <Button type="button" variant="outline" onClick={() => addCustom("current_skills", skillInput, () => setSkillInput(""))}>
+                  <Plus className="w-4 h-4 mr-1" /> Add
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">Press Enter or comma to add. Add as many as you want.</p>
+            </div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-5 animate-fade-in">
             <h2 className="text-xl font-semibold">What are you interested in?</h2>
-            <p className="text-sm text-muted-foreground">Pick areas you want to explore — we'll personalize your career matches.</p>
+            <p className="text-sm text-muted-foreground">Pick areas you want to explore — we'll personalize your career matches and recommendations.</p>
+
+            {form.interests.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-secondary/40 border border-border">
+                {form.interests.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-gradient-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() => toggle("interests", s)} aria-label={`Remove ${s}`}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
-              {INTERESTS.map(s => (
+              {suggestedInterests.map((s) => (
                 <button key={s} type="button" onClick={() => toggle("interests", s)}
                   className={`px-4 py-2 rounded-full text-sm border transition-all ${form.interests.includes(s) ? "bg-gradient-primary text-primary-foreground border-transparent shadow-md" : "bg-secondary border-border hover:border-primary/50"}`}>
                   {form.interests.includes(s) && <Check className="w-3 h-3 inline mr-1" />}
@@ -150,12 +238,30 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+
+            <div>
+              <Label>Add a custom interest</Label>
+              <div className="flex gap-2 mt-1.5">
+                <Input
+                  value={interestInput}
+                  onChange={(e) => setInterestInput(e.target.value)}
+                  onKeyDown={(e) => onCustomKey(e, "interests", interestInput, () => setInterestInput(""))}
+                  placeholder="e.g. Aerospace, Smart Grid, Quality Assurance…"
+                  className="h-11"
+                />
+                <Button type="button" variant="outline" onClick={() => addCustom("interests", interestInput, () => setInterestInput(""))}>
+                  <Plus className="w-4 h-4 mr-1" /> Add
+                </Button>
+              </div>
+            </div>
+
             <div>
               <Label>Career Goal (optional)</Label>
-              <Input value={form.career_goal} onChange={(e) => setForm({ ...form, career_goal: e.target.value })} className="mt-1.5 h-11" placeholder="e.g. Become an AI Engineer at a top firm" />
+              <Input value={form.career_goal} onChange={(e) => setForm({ ...form, career_goal: e.target.value })} className="mt-1.5 h-11" placeholder="e.g. Become an AI Engineer / Site Engineer at L&T / Design Engineer at Tata Motors" />
             </div>
           </div>
         )}
+
 
         <div className="flex justify-between mt-8">
           <Button variant="ghost" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}>Back</Button>
