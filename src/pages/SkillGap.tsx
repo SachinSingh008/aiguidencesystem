@@ -68,10 +68,10 @@ export default function SkillGap() {
                   <span className="text-sm text-muted-foreground">{s.current}% / {s.required}%</span>
                   {s.status !== "complete" && (
                     <div className="flex gap-1.5">
-                      <Button size="sm" variant="outline" className="h-7 text-xs">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate("/courses")}>
                         <BookOpen className="w-3 h-3 mr-1" /> Learn
                       </Button>
-                      <Button size="sm" className="h-7 text-xs bg-gradient-primary">
+                      <Button size="sm" className="h-7 text-xs bg-gradient-primary" onClick={() => navigate("/mock-tests")}>
                         <ClipboardCheck className="w-3 h-3 mr-1" /> Test
                       </Button>
                     </div>
