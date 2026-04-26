@@ -5,6 +5,7 @@ import { skillGaps } from "@/lib/mockData";
 import { useNavigate } from "react-router-dom";
 
 export default function SkillGap() {
+  const navigate = useNavigate();
   const missing = skillGaps.filter(s => s.status === "missing").length;
   const inProgress = skillGaps.filter(s => s.status === "in-progress").length;
   const complete = skillGaps.filter(s => s.status === "complete").length;
