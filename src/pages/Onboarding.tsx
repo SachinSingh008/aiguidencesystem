@@ -165,9 +165,25 @@ export default function Onboarding() {
         {step === 2 && (
           <div className="space-y-5 animate-fade-in">
             <h2 className="text-xl font-semibold">What skills do you already have?</h2>
-            <p className="text-sm text-muted-foreground">Select all that apply. Don't worry, you can add more later.</p>
+            <p className="text-sm text-muted-foreground">
+              Suggestions tailored for <span className="font-medium text-foreground">{form.branch || "your branch"}</span>. Tap to select, or add your own custom skill below.
+            </p>
+
+            {form.current_skills.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-secondary/40 border border-border">
+                {form.current_skills.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-gradient-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() => toggle("current_skills", s)} aria-label={`Remove ${s}`}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
-              {SKILLS.map(s => (
+              {suggestedSkills.map((s) => (
                 <button key={s} type="button" onClick={() => toggle("current_skills", s)}
                   className={`px-4 py-2 rounded-full text-sm border transition-all ${form.current_skills.includes(s) ? "bg-gradient-primary text-primary-foreground border-transparent shadow-md" : "bg-secondary border-border hover:border-primary/50"}`}>
                   {form.current_skills.includes(s) && <Check className="w-3 h-3 inline mr-1" />}
@@ -175,15 +191,46 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+
+            <div>
+              <Label>Add a custom skill</Label>
+              <div className="flex gap-2 mt-1.5">
+                <Input
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => onCustomKey(e, "current_skills", skillInput, () => setSkillInput(""))}
+                  placeholder="e.g. CATIA, Revit, NX CAD, System Testing…"
+                  className="h-11"
+                />
+                <Button type="button" variant="outline" onClick={() => addCustom("current_skills", skillInput, () => setSkillInput(""))}>
+                  <Plus className="w-4 h-4 mr-1" /> Add
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">Press Enter or comma to add. Add as many as you want.</p>
+            </div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-5 animate-fade-in">
             <h2 className="text-xl font-semibold">What are you interested in?</h2>
-            <p className="text-sm text-muted-foreground">Pick areas you want to explore — we'll personalize your career matches.</p>
+            <p className="text-sm text-muted-foreground">Pick areas you want to explore — we'll personalize your career matches and recommendations.</p>
+
+            {form.interests.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-secondary/40 border border-border">
+                {form.interests.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs bg-gradient-primary text-primary-foreground">
+                    {s}
+                    <button type="button" onClick={() => toggle("interests", s)} aria-label={`Remove ${s}`}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
-              {INTERESTS.map(s => (
+              {suggestedInterests.map((s) => (
                 <button key={s} type="button" onClick={() => toggle("interests", s)}
                   className={`px-4 py-2 rounded-full text-sm border transition-all ${form.interests.includes(s) ? "bg-gradient-primary text-primary-foreground border-transparent shadow-md" : "bg-secondary border-border hover:border-primary/50"}`}>
                   {form.interests.includes(s) && <Check className="w-3 h-3 inline mr-1" />}
@@ -191,12 +238,30 @@ export default function Onboarding() {
                 </button>
               ))}
             </div>
+
+            <div>
+              <Label>Add a custom interest</Label>
+              <div className="flex gap-2 mt-1.5">
+                <Input
+                  value={interestInput}
+                  onChange={(e) => setInterestInput(e.target.value)}
+                  onKeyDown={(e) => onCustomKey(e, "interests", interestInput, () => setInterestInput(""))}
+                  placeholder="e.g. Aerospace, Smart Grid, Quality Assurance…"
+                  className="h-11"
+                />
+                <Button type="button" variant="outline" onClick={() => addCustom("interests", interestInput, () => setInterestInput(""))}>
+                  <Plus className="w-4 h-4 mr-1" /> Add
+                </Button>
+              </div>
+            </div>
+
             <div>
               <Label>Career Goal (optional)</Label>
-              <Input value={form.career_goal} onChange={(e) => setForm({ ...form, career_goal: e.target.value })} className="mt-1.5 h-11" placeholder="e.g. Become an AI Engineer at a top firm" />
+              <Input value={form.career_goal} onChange={(e) => setForm({ ...form, career_goal: e.target.value })} className="mt-1.5 h-11" placeholder="e.g. Become an AI Engineer / Site Engineer at L&T / Design Engineer at Tata Motors" />
             </div>
           </div>
         )}
+
 
         <div className="flex justify-between mt-8">
           <Button variant="ghost" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}>Back</Button>
