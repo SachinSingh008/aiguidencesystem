@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, KeyboardEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Sparkles, ArrowRight, Loader2, Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ const INTERESTS_BY_BRANCH: Record<string, string[]> = {
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isReconfigure = searchParams.get("reconfigure") === "1";
   const { user, profile, loading, refreshProfile } = useAuth();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -61,7 +63,7 @@ export default function Onboarding() {
   }, [profile]);
 
   if (!loading && !user) return <Navigate to="/auth" replace />;
-  if (!loading && profile?.onboarded) return <Navigate to="/dashboard" replace />;
+  if (!loading && profile?.onboarded && !isReconfigure) return <Navigate to="/dashboard" replace />;
 
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
@@ -108,7 +110,7 @@ export default function Onboarding() {
       return;
     }
     await refreshProfile();
-    toast.success("You're all set! Welcome aboard 🚀");
+    toast.success(isReconfigure ? "Profile updated — regenerating personalised content…" : "You're all set! Welcome aboard 🚀");
     navigate("/dashboard");
   };
 

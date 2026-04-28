@@ -1,33 +1,16 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft, Sparkles } from "lucide-react";
-import { careerPaths, type CareerPath } from "@/lib/mockData";
+import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
+import { useGeneratedContent, type GenCareerPath } from "@/hooks/useGeneratedContent";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function CareerPaths() {
-  const [selected, setSelected] = useState<CareerPath | null>(null);
+  const [selected, setSelected] = useState<GenCareerPath | null>(null);
   const { profile } = useAuth();
-  const [filter, setFilter] = useState<"recommended" | "all">("recommended");
-
-  // Map full branch name → short tag used in mockData (e.g. "Mechanical Engineering" → "Mechanical")
-  const branchTag = useMemo(() => {
-    const b = profile?.branch || "";
-    if (b.includes("Computer") || b.includes("Information")) return "Computer";
-    if (b.includes("Mechanical")) return "Mechanical";
-    if (b.includes("Civil")) return "Civil";
-    if (b.includes("Electrical")) return "Electrical";
-    if (b.includes("Electronics")) return "Electronics";
-    if (b.includes("Chemical")) return "Chemical";
-    return "";
-  }, [profile?.branch]);
-
-  const visiblePaths = useMemo(() => {
-    if (filter === "all" || !branchTag) return careerPaths;
-    const matched = careerPaths.filter((c) => c.branches.includes(branchTag));
-    return matched.length ? matched : careerPaths;
-  }, [filter, branchTag]);
+  const { content, loading, generating, regenerate } = useGeneratedContent();
+  const paths = content.careerPaths;
 
   if (selected) {
     return (
@@ -47,7 +30,7 @@ export default function CareerPaths() {
             </div>
             <Badge className="bg-gradient-primary border-0 text-base px-3 py-1">{selected.match}% match</Badge>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
             <div className="bg-background/50 rounded-xl p-3">
               <div className="flex items-center gap-1 text-xs text-muted-foreground"><IndianRupee className="w-3 h-3" /> Salary</div>
               <p className="font-semibold mt-1">{selected.salary}</p>
@@ -56,9 +39,9 @@ export default function CareerPaths() {
               <div className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Growth</div>
               <p className="font-semibold mt-1 text-success">{selected.growth}</p>
             </div>
-            <div className="bg-background/50 rounded-xl p-3 col-span-2">
-              <div className="text-xs text-muted-foreground">Best for branches</div>
-              <p className="font-semibold mt-1">{selected.branches.join(", ")}</p>
+            <div className="bg-background/50 rounded-xl p-3 col-span-2 md:col-span-1">
+              <div className="text-xs text-muted-foreground">For</div>
+              <p className="font-semibold mt-1 truncate">{profile?.branch}</p>
             </div>
           </div>
           <div className="mt-5">
@@ -118,36 +101,29 @@ export default function CareerPaths() {
         <div>
           <h1 className="text-3xl font-bold">AI-Recommended Career Paths</h1>
           <p className="text-muted-foreground mt-1">
-            {branchTag
-              ? <>Personalized for <span className="text-foreground font-medium">{profile?.branch}</span> students. Click any path to explore its full roadmap.</>
-              : "Click any path to explore its full roadmap"}
+            {profile?.branch
+              ? <>Personalised for <span className="text-foreground font-medium">{profile.branch}</span> students. Click any path to explore its full roadmap.</>
+              : "Set your profile to see personalised paths."}
           </p>
         </div>
-        {branchTag && (
-          <div className="flex gap-2 p-1 rounded-full bg-secondary border border-border">
-            <button
-              onClick={() => setFilter("recommended")}
-              className={`px-4 py-1.5 text-sm rounded-full transition flex items-center gap-1.5 ${filter === "recommended" ? "bg-gradient-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <Sparkles className="w-3.5 h-3.5" /> For my branch
-            </button>
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-1.5 text-sm rounded-full transition ${filter === "all" ? "bg-gradient-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              All paths
-            </button>
-          </div>
-        )}
+        <Button onClick={regenerate} disabled={generating} variant="outline">
+          {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Regenerate
+        </Button>
       </div>
 
-      {visiblePaths.length === 0 ? (
+      {(loading || generating) && paths.length === 0 ? (
+        <Card className="glass-card p-12 border-border/50 text-center">
+          <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-primary" />
+          <p>Generating career paths tailored to your profile…</p>
+        </Card>
+      ) : paths.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No career paths available yet. Chat with the AI mentor to discover paths tailored to your profile.
+          No career paths yet. Click <span className="text-foreground">Regenerate</span> to create them from your profile.
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visiblePaths.map((c, i) => (
+          {paths.map((c, i) => (
             <Card
               key={c.id}
               className="glass-card p-6 glow-hover border-border/50 animate-slide-up cursor-pointer"

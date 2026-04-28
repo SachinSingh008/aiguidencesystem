@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { GeneratedContentProvider } from "@/hooks/useGeneratedContent";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Landing from "./pages/Landing";
@@ -31,23 +32,25 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/career-paths" element={<CareerPaths />} />
-                <Route path="/skill-gap" element={<SkillGap />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/study-material" element={<StudyMaterial />} />
-                <Route path="/mock-tests" element={<MockTests />} />
-                <Route path="/progress" element={<ProgressPage />} />
-                <Route path="/resume" element={<Resume />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <GeneratedContentProvider>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/career-paths" element={<CareerPaths />} />
+                  <Route path="/skill-gap" element={<SkillGap />} />
+                  <Route path="/courses" element={<Courses />} />
+                  <Route path="/study-material" element={<StudyMaterial />} />
+                  <Route path="/mock-tests" element={<MockTests />} />
+                  <Route path="/progress" element={<ProgressPage />} />
+                  <Route path="/resume" element={<Resume />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </GeneratedContentProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

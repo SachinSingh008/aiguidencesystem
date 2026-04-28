@@ -1,22 +1,24 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, FileQuestion, Trophy, Play, CheckCircle2, XCircle } from "lucide-react";
-import { mockTests, questionBank, type MockTest } from "@/lib/mockData";
+import { Clock, FileQuestion, Trophy, Play, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
+import { useGeneratedContent, type GenMockTest } from "@/hooks/useGeneratedContent";
 import { useProgress } from "@/hooks/useProgress";
 import { toast } from "sonner";
 
 export default function MockTests() {
-  const [activeTest, setActiveTest] = useState<MockTest | null>(null);
+  const { content, loading, generating, regenerate } = useGeneratedContent();
+  const tests = content.mockTests;
+  const [activeTest, setActiveTest] = useState<GenMockTest | null>(null);
   const [qIdx, setQIdx] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [timeLeft, setTimeLeft] = useState(0);
   const [done, setDone] = useState(false);
   const { items, upsert } = useProgress();
 
-  const questions = useMemo(() => (activeTest ? questionBank[activeTest.topic] || [] : []), [activeTest]);
+  const questions = activeTest?.questions || [];
 
   const testHistory = items
     .filter((i) => i.item_type === "test")
@@ -36,7 +38,7 @@ export default function MockTests() {
     if (timeLeft === 0 && activeTest && !done && answers.length > 0) setDone(true);
   }, [timeLeft, activeTest, done, answers.length]);
 
-  const startTest = (t: MockTest) => {
+  const startTest = (t: GenMockTest) => {
     setActiveTest(t);
     setQIdx(0);
     setAnswers([]);
@@ -138,9 +140,15 @@ export default function MockTests() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold">Mock Tests</h1>
-        <p className="text-muted-foreground mt-1">Test your knowledge — results saved to your progress automatically</p>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Mock Tests</h1>
+          <p className="text-muted-foreground mt-1">Branch-specific tests — results saved automatically</p>
+        </div>
+        <Button onClick={regenerate} disabled={generating} variant="outline">
+          {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+          Regenerate
+        </Button>
       </div>
 
       {testHistory.length > 0 && (
@@ -158,18 +166,23 @@ export default function MockTests() {
         </Card>
       )}
 
-      {mockTests.length === 0 ? (
+      {(loading || generating) && tests.length === 0 ? (
+        <Card className="glass-card p-12 border-border/50 text-center">
+          <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-primary" />
+          <p>Crafting branch-specific mock tests…</p>
+        </Card>
+      ) : tests.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No mock tests available yet.
+          No mock tests yet. Click Regenerate.
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {mockTests.map((t, i) => (
+          {tests.map((t, i) => (
             <Card key={t.id} className="glass-card p-5 border-border/50 glow-hover animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
               <Badge variant="outline" className="mb-3">{t.difficulty}</Badge>
               <h3 className="font-bold text-lg">{t.title}</h3>
               <div className="flex gap-4 text-xs text-muted-foreground mt-3">
-                <span className="flex items-center gap-1"><FileQuestion className="w-3 h-3" /> {questionBank[t.topic]?.length ?? t.questions} Qs</span>
+                <span className="flex items-center gap-1"><FileQuestion className="w-3 h-3" /> {t.questions.length} Qs</span>
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t.duration}</span>
               </div>
               <Button onClick={() => startTest(t)} className="w-full mt-4 bg-gradient-primary hover:opacity-90">
