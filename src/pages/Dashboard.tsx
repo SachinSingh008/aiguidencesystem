@@ -65,37 +65,15 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-bold">Your Career Roadmap</h2>
-              <p className="text-sm text-muted-foreground">Path to {topCareer.title}</p>
+              <p className="text-sm text-muted-foreground">Ask the AI mentor to build a personalised roadmap for you.</p>
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/career-paths">View all <ArrowRight className="w-4 h-4 ml-1" /></Link>
+              <Link to="/career-paths">Browse paths <ArrowRight className="w-4 h-4 ml-1" /></Link>
             </Button>
           </div>
-          <div className="space-y-3">
-            {topCareer.roadmap.slice(0, 5).map((step) => (
-              <div key={step.step} className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${
-                  step.status === "complete" ? "bg-success text-success-foreground" :
-                  step.status === "in-progress" ? "bg-gradient-primary text-primary-foreground" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {step.status === "complete" ? "✓" : step.step}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{step.title}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <Clock className="w-3 h-3" /> {step.duration}
-                  </p>
-                </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full ${
-                  step.status === "complete" ? "bg-success/20 text-success" :
-                  step.status === "in-progress" ? "bg-primary/20 text-primary" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {step.status}
-                </span>
-              </div>
-            ))}
+          <div className="text-center text-sm text-muted-foreground py-12">
+            <Clock className="w-8 h-8 mx-auto mb-3 opacity-40" />
+            No roadmap yet. Pick a career path or chat with the AI mentor to generate one.
           </div>
         </Card>
 
