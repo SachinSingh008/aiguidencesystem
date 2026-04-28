@@ -158,21 +158,27 @@ export default function MockTests() {
         </Card>
       )}
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {mockTests.map((t, i) => (
-          <Card key={t.id} className="glass-card p-5 border-border/50 glow-hover animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-            <Badge variant="outline" className="mb-3">{t.difficulty}</Badge>
-            <h3 className="font-bold text-lg">{t.title}</h3>
-            <div className="flex gap-4 text-xs text-muted-foreground mt-3">
-              <span className="flex items-center gap-1"><FileQuestion className="w-3 h-3" /> {questionBank[t.topic]?.length ?? t.questions} Qs</span>
-              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t.duration}</span>
-            </div>
-            <Button onClick={() => startTest(t)} className="w-full mt-4 bg-gradient-primary hover:opacity-90">
-              <Play className="w-4 h-4 mr-2" /> Start Test
-            </Button>
-          </Card>
-        ))}
-      </div>
+      {mockTests.length === 0 ? (
+        <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
+          No mock tests available yet.
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {mockTests.map((t, i) => (
+            <Card key={t.id} className="glass-card p-5 border-border/50 glow-hover animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+              <Badge variant="outline" className="mb-3">{t.difficulty}</Badge>
+              <h3 className="font-bold text-lg">{t.title}</h3>
+              <div className="flex gap-4 text-xs text-muted-foreground mt-3">
+                <span className="flex items-center gap-1"><FileQuestion className="w-3 h-3" /> {questionBank[t.topic]?.length ?? t.questions} Qs</span>
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t.duration}</span>
+              </div>
+              <Button onClick={() => startTest(t)} className="w-full mt-4 bg-gradient-primary hover:opacity-90">
+                <Play className="w-4 h-4 mr-2" /> Start Test
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

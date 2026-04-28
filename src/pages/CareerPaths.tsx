@@ -141,47 +141,53 @@ export default function CareerPaths() {
         )}
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {visiblePaths.map((c, i) => (
-          <Card
-            key={c.id}
-            className="glass-card p-6 glow-hover border-border/50 animate-slide-up cursor-pointer"
-            style={{ animationDelay: `${i * 70}ms` }}
-            onClick={() => setSelected(c)}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="text-4xl">{c.icon}</div>
-              <Badge className="bg-gradient-primary border-0">{c.match}% match</Badge>
-            </div>
-            <h3 className="text-xl font-bold">{c.title}</h3>
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{c.description}</p>
-
-            <div className="grid grid-cols-2 gap-3 mt-5">
-              <div className="bg-secondary/50 rounded-xl p-3">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground"><IndianRupee className="w-3 h-3" /> Salary</div>
-                <p className="font-semibold mt-1 text-sm">{c.salary}</p>
+      {visiblePaths.length === 0 ? (
+        <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
+          No career paths available yet. Chat with the AI mentor to discover paths tailored to your profile.
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {visiblePaths.map((c, i) => (
+            <Card
+              key={c.id}
+              className="glass-card p-6 glow-hover border-border/50 animate-slide-up cursor-pointer"
+              style={{ animationDelay: `${i * 70}ms` }}
+              onClick={() => setSelected(c)}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="text-4xl">{c.icon}</div>
+                <Badge className="bg-gradient-primary border-0">{c.match}% match</Badge>
               </div>
-              <div className="bg-secondary/50 rounded-xl p-3">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Growth</div>
-                <p className="font-semibold mt-1 text-sm text-success">{c.growth}</p>
-              </div>
-            </div>
+              <h3 className="text-xl font-bold">{c.title}</h3>
+              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{c.description}</p>
 
-            <div className="mt-5">
-              <p className="text-xs text-muted-foreground mb-2">Required Skills</p>
-              <div className="flex flex-wrap gap-1.5">
-                {c.skills.slice(0, 4).map((s) => (
-                  <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-foreground">{s}</span>
-                ))}
+              <div className="grid grid-cols-2 gap-3 mt-5">
+                <div className="bg-secondary/50 rounded-xl p-3">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><IndianRupee className="w-3 h-3" /> Salary</div>
+                  <p className="font-semibold mt-1 text-sm">{c.salary}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-xl p-3">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Growth</div>
+                  <p className="font-semibold mt-1 text-sm text-success">{c.growth}</p>
+                </div>
               </div>
-            </div>
 
-            <Button className="w-full mt-5 bg-gradient-primary hover:opacity-90">
-              Explore Path <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Card>
-        ))}
-      </div>
+              <div className="mt-5">
+                <p className="text-xs text-muted-foreground mb-2">Required Skills</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {c.skills.slice(0, 4).map((s) => (
+                    <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-foreground">{s}</span>
+                  ))}
+                </div>
+              </div>
+
+              <Button className="w-full mt-5 bg-gradient-primary hover:opacity-90">
+                Explore Path <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
