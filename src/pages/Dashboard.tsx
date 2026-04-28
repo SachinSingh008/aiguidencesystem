@@ -3,7 +3,6 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, BookOpen, Award, Flame, ArrowRight, Sparkles, Target, Clock, ClipboardCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { careerPaths } from "@/lib/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -24,8 +23,8 @@ const StatCard = ({ icon: Icon, label, value, accent }: any) => (
 export default function Dashboard() {
   const { profile } = useAuth();
   const { items, stats } = useProgress();
-  const topCareer = careerPaths[0];
   const firstName = profile?.full_name?.split(" ")[0] || "there";
+  const goal = profile?.career_goal;
 
   const recent = items.slice(0, 5);
   const totalTracked = items.length || 1;
@@ -44,7 +43,9 @@ export default function Dashboard() {
             Hi, <span className="gradient-text">{firstName}</span> 👋
           </h1>
           <p className="text-muted-foreground mt-2 max-w-xl">
-            You're <span className="text-primary font-semibold">{topCareer.match}%</span> matched for <span className="text-foreground font-semibold">{topCareer.title}</span>. Keep building your skills!
+            {goal
+              ? <>You're working towards <span className="text-foreground font-semibold">{goal}</span>. Keep building your skills!</>
+              : "Set a career goal in Settings to get personalised recommendations."}
           </p>
           <Button asChild className="mt-5 bg-gradient-primary hover:opacity-90">
             <Link to="/career-paths">Explore Career Paths <ArrowRight className="w-4 h-4 ml-2" /></Link>
