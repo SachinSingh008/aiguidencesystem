@@ -3,7 +3,6 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, BookOpen, Award, Flame, ArrowRight, Sparkles, Target, Clock, ClipboardCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { careerPaths } from "@/lib/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProgress } from "@/hooks/useProgress";
 
@@ -24,8 +23,8 @@ const StatCard = ({ icon: Icon, label, value, accent }: any) => (
 export default function Dashboard() {
   const { profile } = useAuth();
   const { items, stats } = useProgress();
-  const topCareer = careerPaths[0];
   const firstName = profile?.full_name?.split(" ")[0] || "there";
+  const goal = profile?.career_goal;
 
   const recent = items.slice(0, 5);
   const totalTracked = items.length || 1;
@@ -44,7 +43,9 @@ export default function Dashboard() {
             Hi, <span className="gradient-text">{firstName}</span> 👋
           </h1>
           <p className="text-muted-foreground mt-2 max-w-xl">
-            You're <span className="text-primary font-semibold">{topCareer.match}%</span> matched for <span className="text-foreground font-semibold">{topCareer.title}</span>. Keep building your skills!
+            {goal
+              ? <>You're working towards <span className="text-foreground font-semibold">{goal}</span>. Keep building your skills!</>
+              : "Set a career goal in Settings to get personalised recommendations."}
           </p>
           <Button asChild className="mt-5 bg-gradient-primary hover:opacity-90">
             <Link to="/career-paths">Explore Career Paths <ArrowRight className="w-4 h-4 ml-2" /></Link>
@@ -64,37 +65,15 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-bold">Your Career Roadmap</h2>
-              <p className="text-sm text-muted-foreground">Path to {topCareer.title}</p>
+              <p className="text-sm text-muted-foreground">Ask the AI mentor to build a personalised roadmap for you.</p>
             </div>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/career-paths">View all <ArrowRight className="w-4 h-4 ml-1" /></Link>
+              <Link to="/career-paths">Browse paths <ArrowRight className="w-4 h-4 ml-1" /></Link>
             </Button>
           </div>
-          <div className="space-y-3">
-            {topCareer.roadmap.slice(0, 5).map((step) => (
-              <div key={step.step} className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${
-                  step.status === "complete" ? "bg-success text-success-foreground" :
-                  step.status === "in-progress" ? "bg-gradient-primary text-primary-foreground" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {step.status === "complete" ? "✓" : step.step}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{step.title}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <Clock className="w-3 h-3" /> {step.duration}
-                  </p>
-                </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full ${
-                  step.status === "complete" ? "bg-success/20 text-success" :
-                  step.status === "in-progress" ? "bg-primary/20 text-primary" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {step.status}
-                </span>
-              </div>
-            ))}
+          <div className="text-center text-sm text-muted-foreground py-12">
+            <Clock className="w-8 h-8 mx-auto mb-3 opacity-40" />
+            No roadmap yet. Pick a career path or chat with the AI mentor to generate one.
           </div>
         </Card>
 
