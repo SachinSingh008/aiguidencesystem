@@ -38,6 +38,48 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_content: {
+        Row: {
+          branch: string | null
+          career_goal: string | null
+          content: Json
+          created_at: string
+          fingerprint: string
+          id: string
+          interests: string[] | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          branch?: string | null
+          career_goal?: string | null
+          content?: Json
+          created_at?: string
+          fingerprint: string
+          id?: string
+          interests?: string[] | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          branch?: string | null
+          career_goal?: string | null
+          content?: Json
+          created_at?: string
+          fingerprint?: string
+          id?: string
+          interests?: string[] | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
