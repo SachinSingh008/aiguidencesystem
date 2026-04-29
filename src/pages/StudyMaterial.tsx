@@ -17,7 +17,7 @@ const typeIcon: Record<string, any> = {
 };
 
 export default function StudyMaterial() {
-  const { content, loading, generating, regenerate } = useGeneratedContent();
+  const { content, loading, generating, regenerate, regeneratePart } = useGeneratedContent();
   const materials = content.studyMaterials;
   const [subject, setSubject] = useState("All");
   const [query, setQuery] = useState("");
@@ -67,7 +67,8 @@ export default function StudyMaterial() {
         </Card>
       ) : materials.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No study material yet. Click Regenerate.
+          We don't have any recommendations for your specific profile in our database right now.<br />
+          We are working hard to collect and process more data, and we will have new materials for you soon!
         </Card>
       ) : (
         <>

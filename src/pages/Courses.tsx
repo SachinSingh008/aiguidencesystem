@@ -18,7 +18,7 @@ const COLORS = [
 ];
 
 export default function Courses() {
-  const { content, loading, generating, regenerate } = useGeneratedContent();
+  const { content, loading, generating, regenerate, regeneratePart } = useGeneratedContent();
   const courses = content.courses;
   const [platform, setPlatform] = useState("All");
   const [category, setCategory] = useState("All");
@@ -90,7 +90,8 @@ export default function Courses() {
         </Card>
       ) : courses.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No courses yet. Click Regenerate to create your personalised list.
+          We don't have any recommendations for your specific profile in our database right now.<br />
+          We are working hard to collect and process more data, and we will have new courses for you soon!
         </Card>
       ) : (
         <>

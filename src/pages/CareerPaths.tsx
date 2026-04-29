@@ -22,7 +22,9 @@ export default function CareerPaths() {
         <Card className="glass-card p-6 md:p-8 border-border/50 bg-gradient-hero">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div className="flex items-center gap-4">
-              <div className="text-5xl">{selected.icon}</div>
+              <div className="text-5xl">
+                {selected.icon?.includes("fa-") || selected.icon?.length > 4 ? "💼" : selected.icon}
+              </div>
               <div>
                 <h1 className="text-3xl font-bold">{selected.title}</h1>
                 <p className="text-muted-foreground mt-1 max-w-2xl">{selected.description}</p>
@@ -60,14 +62,14 @@ export default function CareerPaths() {
           <div className="relative">
             <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-border" />
             <div className="space-y-4">
-              {selected.roadmap.map((s) => (
-                <div key={s.step} className="flex gap-4 items-start relative">
+              {selected.roadmap.map((s, i) => (
+                <div key={i} className="flex gap-4 items-start relative">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 z-10 ${
                     s.status === "complete" ? "bg-success text-success-foreground" :
                     s.status === "in-progress" ? "bg-gradient-primary text-primary-foreground" :
                     "bg-secondary text-muted-foreground"
                   }`}>
-                    {s.status === "complete" ? <CheckCircle2 className="w-5 h-5" /> : s.step}
+                    {s.status === "complete" ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
                   </div>
                   <div className="flex-1 glass-card p-4 -mt-1">
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -131,7 +133,9 @@ export default function CareerPaths() {
               onClick={() => setSelected(c)}
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="text-4xl">{c.icon}</div>
+                <div className="text-4xl">
+                  {c.icon?.includes("fa-") || c.icon?.length > 4 ? "💼" : c.icon}
+                </div>
                 <Badge className="bg-gradient-primary border-0">{c.match}% match</Badge>
               </div>
               <h3 className="text-xl font-bold">{c.title}</h3>

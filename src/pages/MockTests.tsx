@@ -9,7 +9,7 @@ import { useProgress } from "@/hooks/useProgress";
 import { toast } from "sonner";
 
 export default function MockTests() {
-  const { content, loading, generating, regenerate } = useGeneratedContent();
+  const { content, loading, generating, regenerate, regeneratePart } = useGeneratedContent();
   const tests = content.mockTests;
   const [activeTest, setActiveTest] = useState<GenMockTest | null>(null);
   const [qIdx, setQIdx] = useState(0);
@@ -65,6 +65,9 @@ export default function MockTests() {
           metadata: { score: pct, correct, total: questions.length, topic: activeTest.topic },
         });
         toast.success(`Test saved: ${pct}%`);
+        
+        // Silently update skill gaps in the background based on this new test score
+        regeneratePart(1);
       }
     }
   };
@@ -172,8 +175,9 @@ export default function MockTests() {
           <p>Crafting branch-specific mock tests…</p>
         </Card>
       ) : tests.length === 0 ? (
-        <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No mock tests yet. Click Regenerate.
+        <Card className="glass-card p-12 border-border/50 text-center">
+          <Loader2 className="w-7 h-7 mx-auto mb-3 animate-spin text-primary" />
+          <p className="text-muted-foreground">Generating your mock tests…</p>
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">

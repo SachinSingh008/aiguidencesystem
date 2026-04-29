@@ -106,21 +106,23 @@ export default function Dashboard() {
           {topCareer ? (
             <>
               <div className="flex items-center gap-3 mb-4">
-                <div className="text-3xl">{topCareer.icon}</div>
+                <div className="text-3xl">
+                  {topCareer.icon?.includes("fa-") || topCareer.icon?.length > 4 ? "💼" : topCareer.icon}
+                </div>
                 <div className="flex-1">
                   <p className="font-semibold">{topCareer.title} <span className="text-xs text-primary ml-2">{topCareer.match}% match</span></p>
                   <p className="text-xs text-muted-foreground">{topCareer.salary} • {topCareer.growth}</p>
                 </div>
               </div>
-              <div className="space-y-2.5">
-                {topCareer.roadmap.slice(0, 5).map((step) => (
-                  <div key={step.step} className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold flex-shrink-0 text-sm ${
+              <div className="space-y-3">
+                {topCareer.roadmap.slice(0, 5).map((step, i) => (
+                  <div key={i} className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 text-sm ${
                       step.status === "complete" ? "bg-success text-success-foreground" :
                       step.status === "in-progress" ? "bg-gradient-primary text-primary-foreground" :
                       "bg-secondary text-muted-foreground"
                     }`}>
-                      {step.status === "complete" ? "✓" : step.step}
+                      {step.status === "complete" ? "✓" : i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate text-sm">{step.title}</p>

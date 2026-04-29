@@ -109,6 +109,14 @@ export default function Onboarding() {
       setSaving(false);
       return;
     }
+    // On reconfigure, wipe old AI content AND old progress data so everything
+    // reflects the new profile cleanly (no stale test scores / course completions).
+    if (isReconfigure) {
+      await Promise.all([
+        supabase.from("generated_content").delete().eq("user_id", user.id),
+        supabase.from("user_progress").delete().eq("user_id", user.id),
+      ]);
+    }
     await refreshProfile();
     toast.success(isReconfigure ? "Profile updated — regenerating personalised content…" : "You're all set! Welcome aboard 🚀");
     navigate("/dashboard");

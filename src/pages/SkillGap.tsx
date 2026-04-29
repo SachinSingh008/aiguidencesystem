@@ -31,8 +31,9 @@ export default function SkillGap() {
           <p>Analyzing your skill gaps…</p>
         </Card>
       ) : skillGaps.length === 0 ? (
-        <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No skill data yet. Click Regenerate.
+        <Card className="glass-card p-12 border-border/50 text-center">
+          <Loader2 className="w-7 h-7 mx-auto mb-3 animate-spin text-primary" />
+          <p className="text-muted-foreground">Analyzing your skill gaps…</p>
         </Card>
       ) : (
         <>
