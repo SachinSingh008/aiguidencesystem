@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, FileQuestion, Trophy, Play, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
-import { useGeneratedContent, type GenMockTest } from "@/hooks/useGeneratedContent";
+import { useAIContent, type AIMockTest as GenMockTest } from "@/hooks/useAIContent";
 import { useProgress } from "@/hooks/useProgress";
 import { toast } from "sonner";
 
 export default function MockTests() {
-  const { content, loading, generating, regenerate, regeneratePart } = useGeneratedContent();
-  const tests = content.mockTests;
+  const { content, loading, generating, generate } = useAIContent();
+  const tests: GenMockTest[] = content.mockTests || [];
+  const regenerate = generate;
   const [activeTest, setActiveTest] = useState<GenMockTest | null>(null);
   const [qIdx, setQIdx] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -65,9 +66,6 @@ export default function MockTests() {
           metadata: { score: pct, correct, total: questions.length, topic: activeTest.topic },
         });
         toast.success(`Test saved: ${pct}%`);
-        
-        // Silently update skill gaps in the background based on this new test score
-        regeneratePart(1);
       }
     }
   };

@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { GeneratedContentProvider } from "@/hooks/useGeneratedContent";
+import { AIContentProvider } from "@/hooks/useAIContent";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Landing from "./pages/Landing";
@@ -32,7 +32,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <GeneratedContentProvider>
+            <AIContentProvider>
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
@@ -50,7 +50,7 @@ const App = () => (
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </GeneratedContentProvider>
+            </AIContentProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

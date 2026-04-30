@@ -1,169 +1,92 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, IndianRupee, ArrowRight, CheckCircle2, Clock, ExternalLink, ArrowLeft, Loader2, RefreshCw } from "lucide-react";
-import { useGeneratedContent, type GenCareerPath } from "@/hooks/useGeneratedContent";
+import { Compass, ExternalLink, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAIContent } from "@/hooks/useAIContent";
 
 export default function CareerPaths() {
-  const [selected, setSelected] = useState<GenCareerPath | null>(null);
   const { profile } = useAuth();
-  const { content, loading, generating, regenerate } = useGeneratedContent();
-  const paths = content.careerPaths;
-
-  if (selected) {
-    return (
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => setSelected(null)}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to all paths
-        </Button>
-
-        <Card className="glass-card p-6 md:p-8 border-border/50 bg-gradient-hero">
-          <div className="flex items-start justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-4">
-              <div className="text-5xl">
-                {selected.icon?.includes("fa-") || selected.icon?.length > 4 ? "💼" : selected.icon}
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold">{selected.title}</h1>
-                <p className="text-muted-foreground mt-1 max-w-2xl">{selected.description}</p>
-              </div>
-            </div>
-            <Badge className="bg-gradient-primary border-0 text-base px-3 py-1">{selected.match}% match</Badge>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
-            <div className="bg-background/50 rounded-xl p-3">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground"><IndianRupee className="w-3 h-3" /> Salary</div>
-              <p className="font-semibold mt-1">{selected.salary}</p>
-            </div>
-            <div className="bg-background/50 rounded-xl p-3">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Growth</div>
-              <p className="font-semibold mt-1 text-success">{selected.growth}</p>
-            </div>
-            <div className="bg-background/50 rounded-xl p-3 col-span-2 md:col-span-1">
-              <div className="text-xs text-muted-foreground">For</div>
-              <p className="font-semibold mt-1 truncate">{profile?.branch}</p>
-            </div>
-          </div>
-          <div className="mt-5">
-            <p className="text-xs text-muted-foreground mb-2">Required Skills</p>
-            <div className="flex flex-wrap gap-1.5">
-              {selected.skills.map((s) => (
-                <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-foreground">{s}</span>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass-card p-6 border-border/50">
-          <h2 className="text-xl font-bold mb-1">Step-by-step Roadmap</h2>
-          <p className="text-sm text-muted-foreground mb-6">Follow this path with curated resources at each stage</p>
-          <div className="relative">
-            <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-border" />
-            <div className="space-y-4">
-              {selected.roadmap.map((s, i) => (
-                <div key={i} className="flex gap-4 items-start relative">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold flex-shrink-0 z-10 ${
-                    s.status === "complete" ? "bg-success text-success-foreground" :
-                    s.status === "in-progress" ? "bg-gradient-primary text-primary-foreground" :
-                    "bg-secondary text-muted-foreground"
-                  }`}>
-                    {s.status === "complete" ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
-                  </div>
-                  <div className="flex-1 glass-card p-4 -mt-1">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <p className="font-semibold">{s.title}</p>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{s.duration}</span>
-                    </div>
-                    {s.resources?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {s.resources.map((r) => (
-                          <a key={r.url} href={r.url} target="_blank" rel="noopener noreferrer">
-                            <Button size="sm" variant="outline" className="h-7 text-xs">
-                              {r.label} <ExternalLink className="w-3 h-3 ml-1.5" />
-                            </Button>
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  const { content, loading, generating, generate } = useAIContent();
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">AI-Recommended Career Paths</h1>
+          <h1 className="text-3xl font-bold">AI Career Paths</h1>
           <p className="text-muted-foreground mt-1">
             {profile?.branch
-              ? <>Personalised for <span className="text-foreground font-medium">{profile.branch}</span> students. Click any path to explore its full roadmap.</>
+              ? <>Personalised for <span className="text-foreground font-medium">{profile.branch}</span> · {profile.year}</>
               : "Set your profile to see personalised paths."}
           </p>
         </div>
-        <Button onClick={regenerate} disabled={generating} variant="outline">
+        <Button onClick={generate} disabled={generating || !profile?.branch} variant="outline">
           {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
           Regenerate
         </Button>
       </div>
 
-      {(loading || generating) && paths.length === 0 ? (
-        <Card className="glass-card p-12 border-border/50 text-center">
+      {(loading || generating) && content.careerPaths.length === 0 ? (
+        <Card className="glass-card p-16 border-border/50 text-center">
           <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-primary" />
-          <p>Generating career paths tailored to your profile…</p>
+          <p className="font-medium">Gemini is generating career paths for you…</p>
         </Card>
-      ) : paths.length === 0 ? (
+      ) : content.careerPaths.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">
-          No career paths yet. Click <span className="text-foreground">Regenerate</span> to create them from your profile.
+          No career paths yet. Click <span className="text-foreground">Regenerate</span> or complete your profile.
         </Card>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {paths.map((c, i) => (
-            <Card
-              key={c.id}
-              className="glass-card p-6 glow-hover border-border/50 animate-slide-up cursor-pointer"
-              style={{ animationDelay: `${i * 70}ms` }}
-              onClick={() => setSelected(c)}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="text-4xl">
-                  {c.icon?.includes("fa-") || c.icon?.length > 4 ? "💼" : c.icon}
+        <div className="grid md:grid-cols-3 gap-5">
+          {content.careerPaths.map((p, i) => (
+            <Card key={i} className="glass-card border-border/50 p-6 flex flex-col gap-4 glow-hover animate-slide-up" style={{ animationDelay: `${i * 70}ms` }}>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                  <Compass className="w-5 h-5 text-white" />
                 </div>
-                <Badge className="bg-gradient-primary border-0">{c.match}% match</Badge>
-              </div>
-              <h3 className="text-xl font-bold">{c.title}</h3>
-              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{c.description}</p>
-
-              <div className="grid grid-cols-2 gap-3 mt-5">
-                <div className="bg-secondary/50 rounded-xl p-3">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><IndianRupee className="w-3 h-3" /> Salary</div>
-                  <p className="font-semibold mt-1 text-sm">{c.salary}</p>
-                </div>
-                <div className="bg-secondary/50 rounded-xl p-3">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground"><TrendingUp className="w-3 h-3" /> Growth</div>
-                  <p className="font-semibold mt-1 text-sm text-success">{c.growth}</p>
-                </div>
+                <h2 className="text-xl font-bold leading-tight">{p.title}</h2>
               </div>
 
-              <div className="mt-5">
-                <p className="text-xs text-muted-foreground mb-2">Required Skills</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{p.description}</p>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">{p.salary}</span>
+                <span className="text-xs px-3 py-1 rounded-full bg-blue-500/15 text-blue-400 font-medium">{p.growth}</span>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Key Skills</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {c.skills.slice(0, 4).map((s) => (
+                  {p.skills.map(s => (
                     <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-foreground">{s}</span>
                   ))}
                 </div>
               </div>
 
-              <Button className="w-full mt-5 bg-gradient-primary hover:opacity-90">
-                Explore Path <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div>
+                <p className="text-xs text-muted-foreground mb-3 font-semibold uppercase tracking-wide">Detailed Roadmap</p>
+                <div className="space-y-4">
+                  {p.modules?.map((mod, mi) => (
+                    <div key={mi} className="bg-secondary/30 rounded-lg p-3 border border-border/40">
+                      <h4 className="text-sm font-bold text-foreground mb-2">{mod.title}</h4>
+                      <ol className="space-y-1.5 pl-1">
+                        {mod.steps.map((step, si) => (
+                          <li key={si} className="flex gap-2 items-start text-sm group">
+                            <span className="w-4 h-4 rounded-full bg-gradient-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{si + 1}</span>
+                            <a 
+                              href={`https://www.youtube.com/results?search_query=${encodeURIComponent(step)}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground leading-snug hover:text-primary hover:underline transition-colors cursor-pointer flex-1"
+                            >
+                              {step}
+                            </a>
+                            <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5 flex-shrink-0" />
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </Card>
           ))}
         </div>

@@ -14,8 +14,8 @@ const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Recent Graduate"
 
 // Branch-specific suggested skills — students can also add custom ones
 const SKILLS_BY_BRANCH: Record<string, string[]> = {
-  "Computer Engineering": ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "Git", "AWS", "Docker", "Linux", "DSA"],
-  "Information Technology": ["Python", "JavaScript", "SQL", "Networking", "Linux", "AWS", "Cybersecurity", "Git", "React", "DevOps"],
+  "Computer Engineering": ["Python", "JavaScript", "Java", "C++", "React", "Node.js", "SQL", "MySQL", "PostgreSQL", "Git", "AWS", "Docker", "Linux", "DSA", "REST APIs", "Postman", "Selenium", "Software Testing", "JIRA", "Jest"],
+  "Information Technology": ["Python", "JavaScript", "SQL", "MySQL", "Networking", "Linux", "AWS", "Cybersecurity", "Git", "React", "DevOps", "REST APIs", "Postman", "Selenium", "JIRA", "Software Testing", "DBMS"],
   "Mechanical Engineering": ["AutoCAD", "SolidWorks", "CATIA", "ANSYS", "MATLAB", "Thermodynamics", "CNC", "3D Printing", "GD&T", "Fusion 360"],
   "Civil Engineering": ["AutoCAD", "STAAD Pro", "Revit", "ETABS", "Primavera", "MS Project", "Surveying", "BIM", "GIS", "Estimation"],
   "Electrical Engineering": ["MATLAB", "Simulink", "PLC", "SCADA", "Power Systems", "AutoCAD Electrical", "ETAP", "Embedded C", "Arduino", "PCB Design"],
@@ -25,8 +25,8 @@ const SKILLS_BY_BRANCH: Record<string, string[]> = {
 };
 
 const INTERESTS_BY_BRANCH: Record<string, string[]> = {
-  "Computer Engineering": ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Game Dev", "Blockchain", "DevOps"],
-  "Information Technology": ["Cybersecurity", "Cloud Computing", "Data Science", "Networking", "Web Development", "DevOps", "AI/ML"],
+  "Computer Engineering": ["AI/ML", "Web Development", "Mobile Apps", "Cloud Computing", "Cybersecurity", "Data Science", "Game Dev", "Blockchain", "DevOps", "QA & Testing", "API Development", "Database Design", "Full Stack Dev"],
+  "Information Technology": ["Cybersecurity", "Cloud Computing", "Data Science", "Networking", "Web Development", "DevOps", "AI/ML", "QA & Testing", "API Development", "Database Design"],
   "Mechanical Engineering": ["Automotive Design", "Robotics", "CAD/CAM", "Manufacturing", "HVAC", "Aerospace", "Product Design", "Renewable Energy"],
   "Civil Engineering": ["Structural Design", "Construction Management", "Transportation", "Smart Cities", "BIM", "Geotechnical", "Environmental"],
   "Electrical Engineering": ["Power Systems", "Renewable Energy", "Embedded Systems", "Robotics", "EV Technology", "Smart Grid", "Industrial Automation"],

@@ -1,13 +1,22 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, BookOpen, ClipboardCheck, AlertCircle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
-import { useGeneratedContent } from "@/hooks/useGeneratedContent";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export default function SkillGap() {
   const navigate = useNavigate();
-  const { content, loading, generating, regenerate } = useGeneratedContent();
-  const skillGaps = content.skillGaps;
+  const { profile } = useAuth();
+  const skillGaps = (profile?.current_skills || []).map((skill) => ({
+    skill,
+    current: 65,
+    required: 80,
+    status: "in-progress" as const,
+  }));
+  const loading = false;
+  const generating = false;
+  const regenerate = () => {};
   const missing = skillGaps.filter(s => s.status === "missing").length;
   const inProgress = skillGaps.filter(s => s.status === "in-progress").length;
   const complete = skillGaps.filter(s => s.status === "complete").length;
@@ -72,6 +81,37 @@ export default function SkillGap() {
               </div>
             </Card>
           </div>
+
+          {/* Visual Skill Gap Chart */}
+          <Card className="glass-card p-6 border-border/50">
+            <h2 className="text-xl font-bold mb-1">Skill Gap Overview</h2>
+            <p className="text-sm text-muted-foreground mb-4">Your current proficiency vs. what's required (top 8 skills)</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={skillGaps.slice(0, 8)} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+                <XAxis dataKey="skill" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" interval={0} />
+                <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
+                <Tooltip
+                  contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8 }}
+                  formatter={(val: number, name: string) => [`${val}%`, name === "current" ? "You" : "Required"]}
+                />
+                <Bar dataKey="required" name="required" fill="var(--muted)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="current" name="current" radius={[4, 4, 0, 0]}>
+                  {skillGaps.slice(0, 8).map((s, i) => (
+                    <Cell
+                      key={i}
+                      fill={s.status === "complete" ? "#22c55e" : s.status === "in-progress" ? "#f59e0b" : "#ef4444"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex items-center gap-5 mt-2 text-xs text-muted-foreground justify-center">
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#22c55e] inline-block" /> Mastered</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#f59e0b] inline-block" /> In Progress</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#ef4444] inline-block" /> Missing</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--muted)] inline-block" /> Required Level</span>
+            </div>
+          </Card>
 
           <Card className="glass-card p-6 border-border/50">
             <h2 className="text-xl font-bold mb-5">Detailed Skill Analysis</h2>
