@@ -6,10 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { Clock, FileQuestion, Trophy, Play, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import { useAIContent, type AIMockTest as GenMockTest } from "@/hooks/useAIContent";
 import { useProgress } from "@/hooks/useProgress";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function MockTests() {
   const { content, loading, generating, generate } = useAIContent();
+  const { profile } = useAuth();
   const tests: GenMockTest[] = content.mockTests || [];
   const regenerate = generate;
   const [activeTest, setActiveTest] = useState<GenMockTest | null>(null);
@@ -57,6 +59,7 @@ export default function MockTests() {
       const correct = next.filter((a, idx) => a === questions[idx]?.answer).length;
       const pct = Math.round((correct / questions.length) * 100);
       if (activeTest) {
+        // Save the test result
         await upsert({
           item_type: "test",
           item_id: `${activeTest.id}-${Date.now()}`,
@@ -65,6 +68,37 @@ export default function MockTests() {
           completed: true,
           metadata: { score: pct, correct, total: questions.length, topic: activeTest.topic },
         });
+
+        // Update skill scores for all skills that match this test's topic
+        const testTopic = (activeTest.topic || "").toLowerCase();
+        const profileSkills: string[] = profile?.current_skills || [];
+        const matchedSkills = profileSkills.filter((skill) =>
+          testTopic.includes(skill.toLowerCase()) ||
+          skill.toLowerCase().includes(testTopic) ||
+          // Broad topic matches
+          (testTopic.includes("dsa") && ["dsa", "data structures", "algorithms", "python", "java", "c++"].some(k => skill.toLowerCase().includes(k))) ||
+          (testTopic.includes("web") && ["react", "javascript", "html", "css", "node", "frontend"].some(k => skill.toLowerCase().includes(k))) ||
+          (testTopic.includes("sql") && ["sql", "mysql", "postgresql", "database"].some(k => skill.toLowerCase().includes(k))) ||
+          (testTopic.includes("python") && skill.toLowerCase().includes("python")) ||
+          (testTopic.includes("maths") || testTopic.includes("math") || testTopic.includes("aptitude"))
+        );
+
+        // If no specific match, apply to the first 2 profile skills as a general score
+        const skillsToUpdate = matchedSkills.length > 0 ? matchedSkills : profileSkills.slice(0, 2);
+
+        await Promise.all(
+          skillsToUpdate.map((skill) =>
+            upsert({
+              item_type: "skill_score",
+              item_id: skill,
+              item_name: skill,
+              progress: pct,
+              completed: pct >= 80,
+              metadata: { lastTestTitle: activeTest.title, lastTestTopic: activeTest.topic },
+            })
+          )
+        );
+
         toast.success(`Test saved: ${pct}%`);
       }
     }

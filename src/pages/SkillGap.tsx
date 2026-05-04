@@ -2,24 +2,29 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, BookOpen, ClipboardCheck, AlertCircle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProgress } from "@/hooks/useProgress";
 import { useNavigate } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+
+const REQUIRED = 80; // target proficiency for all skills
 
 export default function SkillGap() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const skillGaps = (profile?.current_skills || []).map((skill) => ({
-    skill,
-    current: 65,
-    required: 80,
-    status: "in-progress" as const,
-  }));
-  const loading = false;
-  const generating = false;
-  const regenerate = () => {};
-  const missing = skillGaps.filter(s => s.status === "missing").length;
-  const inProgress = skillGaps.filter(s => s.status === "in-progress").length;
-  const complete = skillGaps.filter(s => s.status === "complete").length;
+  const { getSkillScore, loading } = useProgress();
+
+  const skillGaps = (profile?.current_skills || []).map((skill) => {
+    const current = getSkillScore(skill); // 0 until a test is taken
+    const status =
+      current >= REQUIRED ? "complete" :
+      current > 0        ? "in-progress" :
+                           "missing";
+    return { skill, current, required: REQUIRED, status };
+  });
+
+  const missing    = skillGaps.filter((s) => s.status === "missing").length;
+  const inProgress = skillGaps.filter((s) => s.status === "in-progress").length;
+  const complete   = skillGaps.filter((s) => s.status === "complete").length;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -28,24 +33,24 @@ export default function SkillGap() {
           <h1 className="text-3xl font-bold">Skill Gap Analyzer</h1>
           <p className="text-muted-foreground mt-1">Your current skills vs what your target career requires</p>
         </div>
-        <Button onClick={regenerate} disabled={generating} variant="outline">
-          {generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Regenerate
+        <Button onClick={() => navigate("/mock-tests")} variant="outline">
+          <ClipboardCheck className="w-4 h-4 mr-2" />
+          Take a Test to Update Scores
         </Button>
       </div>
 
-      {(loading || generating) && skillGaps.length === 0 ? (
+      {loading ? (
         <Card className="glass-card p-12 border-border/50 text-center">
           <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-primary" />
-          <p>Analyzing your skill gaps…</p>
+          <p>Loading skill data…</p>
         </Card>
       ) : skillGaps.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center">
-          <Loader2 className="w-7 h-7 mx-auto mb-3 animate-spin text-primary" />
-          <p className="text-muted-foreground">Analyzing your skill gaps…</p>
+          <p className="text-muted-foreground">No skills in your profile yet. Add skills in Settings to see your gap analysis.</p>
         </Card>
       ) : (
         <>
+          {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-4">
             <Card className="glass-card p-5 border-border/50">
               <div className="flex items-center gap-3">
@@ -54,7 +59,7 @@ export default function SkillGap() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{missing}</p>
-                  <p className="text-xs text-muted-foreground">Missing</p>
+                  <p className="text-xs text-muted-foreground">Not Started</p>
                 </div>
               </div>
             </Card>
@@ -82,10 +87,18 @@ export default function SkillGap() {
             </Card>
           </div>
 
-          {/* Visual Skill Gap Chart */}
+          {/* Tip banner when all are 0 */}
+          {missing === skillGaps.length && (
+            <Card className="glass-card p-4 border-primary/30 bg-primary/5 flex items-center gap-3">
+              <ClipboardCheck className="w-5 h-5 text-primary flex-shrink-0" />
+              <p className="text-sm">Take mock tests to see your skill proficiency grow here. Each test result automatically updates the relevant skills.</p>
+            </Card>
+          )}
+
+          {/* Chart */}
           <Card className="glass-card p-6 border-border/50">
             <h2 className="text-xl font-bold mb-1">Skill Gap Overview</h2>
-            <p className="text-sm text-muted-foreground mb-4">Your current proficiency vs. what's required (top 8 skills)</p>
+            <p className="text-sm text-muted-foreground mb-4">Your current proficiency vs. required level (80%)</p>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={skillGaps.slice(0, 8)} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
                 <XAxis dataKey="skill" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" interval={0} />
@@ -106,13 +119,14 @@ export default function SkillGap() {
               </BarChart>
             </ResponsiveContainer>
             <div className="flex items-center gap-5 mt-2 text-xs text-muted-foreground justify-center">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#22c55e] inline-block" /> Mastered</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#22c55e] inline-block" /> Mastered (≥80%)</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#f59e0b] inline-block" /> In Progress</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#ef4444] inline-block" /> Missing</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#ef4444] inline-block" /> Not Started</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--muted)] inline-block" /> Required Level</span>
             </div>
           </Card>
 
+          {/* Detailed list */}
           <Card className="glass-card p-6 border-border/50">
             <h2 className="text-xl font-bold mb-5">Detailed Skill Analysis</h2>
             <div className="space-y-5">
@@ -121,8 +135,8 @@ export default function SkillGap() {
                   <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{s.skill}</span>
-                      {s.status === "complete" && <CheckCircle2 className="w-4 h-4 text-success" />}
-                      {s.status === "missing" && <AlertCircle className="w-4 h-4 text-destructive" />}
+                      {s.status === "complete"   && <CheckCircle2 className="w-4 h-4 text-success" />}
+                      {s.status === "missing"    && <AlertCircle  className="w-4 h-4 text-destructive" />}
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-muted-foreground">{s.current}% / {s.required}%</span>
@@ -142,7 +156,7 @@ export default function SkillGap() {
                     <div className="absolute inset-y-0 left-0 bg-border" style={{ width: `${s.required}%` }} />
                     <div
                       className={`absolute inset-y-0 left-0 rounded-full transition-all ${
-                        s.status === "complete" ? "bg-gradient-to-r from-success to-success" :
+                        s.status === "complete"   ? "bg-gradient-to-r from-success to-success" :
                         s.status === "in-progress" ? "bg-gradient-primary" :
                         "bg-gradient-to-r from-destructive to-warning"
                       }`}
@@ -158,3 +172,4 @@ export default function SkillGap() {
     </div>
   );
 }
+
