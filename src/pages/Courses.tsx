@@ -12,7 +12,7 @@ const CARD_COLORS = [
 
 export default function Courses() {
   const { profile } = useAuth();
-  const { content, loading, generating, generate } = useAIContent();
+  const { content, loading, generating, phase, generate } = useAIContent();
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -30,7 +30,7 @@ export default function Courses() {
       {(loading || generating) && content.courses.length === 0 ? (
         <Card className="glass-card p-16 border-border/50 text-center">
           <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-primary" />
-          <p className="font-medium">Finding the best courses for you…</p>
+          <p className="font-medium">{phase || "Finding the best courses for you…"}</p>
         </Card>
       ) : content.courses.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center text-muted-foreground">

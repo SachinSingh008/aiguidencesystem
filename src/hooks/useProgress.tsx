@@ -103,5 +103,16 @@ export function useProgress() {
     })(),
   };
 
-  return { items, loading, upsert, refresh, stats };
+  // Skill scores: keyed by skill name, value 0-100. Only set when tests are taken.
+  // Reset automatically when user_progress is deleted (profile edit).
+  const skillScores: Record<string, number> = {};
+  items
+    .filter((i) => i.item_type === "skill_score")
+    .forEach((i) => {
+      if (i.item_id) skillScores[i.item_id] = i.progress ?? 0;
+    });
+
+  const getSkillScore = (skill: string) => skillScores[skill] ?? 0;
+
+  return { items, loading, upsert, refresh, stats, skillScores, getSkillScore };
 }

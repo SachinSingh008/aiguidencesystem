@@ -11,12 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Moon, Sun, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAIContent } from "@/hooks/useAIContent";
 
 const BRANCHES = ["Computer Engineering", "Information Technology", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics & Communication", "Chemical Engineering", "Other"];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Recent Graduate"];
 
 export default function Settings() {
   const { profile, user, refreshProfile, signOut } = useAuth();
+  const { clearCache } = useAIContent();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
@@ -51,10 +53,17 @@ export default function Settings() {
       interests: form.interests.split(",").map(s => s.trim()).filter(Boolean),
       career_goal: form.career_goal,
     }).eq("user_id", user.id);
-    if (error) toast.error("Save failed");
-    else {
+    if (error) {
+      toast.error("Save failed");
+    } else {
+      // Reset all personalised data so everything regenerates for the new profile
+      clearCache();
+      await Promise.all([
+        supabase.from("user_progress").delete().eq("user_id", user.id),
+        supabase.from("chat_history").delete().eq("user_id", user.id),
+      ]);
       await refreshProfile();
-      toast.success("Profile saved");
+      toast.success("Profile saved — regenerating personalised content…");
     }
     setSaving(false);
   };

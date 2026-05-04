@@ -17,6 +17,7 @@ const SUGGESTIONS = [
   "Tips to crack tech interviews",
 ];
 
+
 export function ChatBot() {
   const { profile, user, session } = useAuth();
   const [open, setOpen] = useState(false);
@@ -24,17 +25,33 @@ export function ChatBot() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const prevFingerprintRef = useRef<string>("");
 
-  // Greeting personalized to user
+  // Build the greeting message for the current profile
+  const buildGreeting = (p: typeof profile): Msg => {
+    const name = p?.full_name?.split(" ")[0] || "there";
+    return {
+      role: "assistant",
+      content: `👋 Hey ${name}! I'm your **CareerPilot AI mentor**.\n\nI know you're a **${p?.year || ""} ${p?.branch || "Engineering"}** student${p?.career_goal ? ` aiming to **${p.career_goal}**` : ""}. I can help with career paths, skill gaps, learning plans, interviews, and more. What's on your mind?`,
+    };
+  };
+
+  // Reset chat when profile identity changes (new branch / skills / year)
   useEffect(() => {
-    if (profile && messages.length === 0) {
-      const name = profile.full_name?.split(" ")[0] || "there";
-      setMessages([{
-        role: "assistant",
-        content: `👋 Hey ${name}! I'm your **CareerPilot AI mentor**.\n\nI know you're a **${profile.year || ""} ${profile.branch || "Engineering"}** student${profile.career_goal ? ` aiming to **${profile.career_goal}**` : ""}. I can help with career paths, skill gaps, learning plans, interviews, and more. What's on your mind?`,
-      }]);
+    if (!profile) return;
+    const fp = `${profile.branch}|${profile.year}|${(profile.current_skills || []).sort().join(",")}|${(profile.interests || []).sort().join(",")}`;
+    if (prevFingerprintRef.current && prevFingerprintRef.current !== fp) {
+      // Profile changed — wipe history and start fresh
+      if (user) {
+        supabase.from("chat_history").delete().eq("user_id", user.id).then(() => {});
+      }
+      setMessages([buildGreeting(profile)]);
+    } else if (messages.length === 0) {
+      setMessages([buildGreeting(profile)]);
     }
-  }, [profile]);
+    prevFingerprintRef.current = fp;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.branch, profile?.year, profile?.current_skills, profile?.interests, profile?.full_name]);
 
   // Load chat history once when opened
   useEffect(() => {
@@ -42,7 +59,7 @@ export function ChatBot() {
       supabase.from("chat_history").select("role, content").eq("user_id", user.id).order("created_at").limit(40)
         .then(({ data }) => {
           if (data && data.length) {
-            setMessages([messages[0], ...data.map(d => ({ role: d.role as "user"|"assistant", content: d.content }))]);
+            setMessages((prev) => [prev[0], ...data.map(d => ({ role: d.role as "user"|"assistant", content: d.content }))]);
           }
         });
     }

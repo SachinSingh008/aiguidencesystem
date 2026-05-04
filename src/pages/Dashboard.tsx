@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, FileText, Compass, ExternalLink, RefreshCw, Loader2, Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { BookOpen, FileText, Compass, ExternalLink, RefreshCw, Loader2, Sparkles, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIContent } from "@/hooks/useAIContent";
 
 export default function Dashboard() {
   const { profile } = useAuth();
-  const { content, loading, generating, generate } = useAIContent();
+  const { content, loading, generating, phase, generate } = useAIContent();
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
 
@@ -53,12 +53,30 @@ export default function Dashboard() {
         ) : null}
       </div>
 
+      {/* Partial content warning */}
+      {content.partial && content.courses.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-sm">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span>Some content could not be fully generated. Click <strong>Regenerate</strong> to try again.</span>
+        </div>
+      )}
+
       {/* Loading state */}
       {(loading || generating) && content.courses.length === 0 && (
         <Card className="glass-card p-16 text-center border-border/50">
           <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin text-primary" />
-          <p className="font-semibold text-lg">Gemini is generating your personalised recommendations…</p>
-          <p className="text-sm text-muted-foreground mt-1">This takes about 5–10 seconds.</p>
+          <p className="font-semibold text-lg">{phase || "Preparing your personalised recommendations…"}</p>
+          <p className="text-sm text-muted-foreground mt-1">Running 4-phase AI pipeline · This takes about 15–20 seconds.</p>
+          <div className="mt-5 flex justify-center gap-2 flex-wrap">
+            {["Courses", "Study Materials", "Career Paths", "Mock Tests"].map((p) => {
+              const active = phase.toLowerCase().includes(p.toLowerCase().split(" ")[1] ?? p.toLowerCase().split(" ")[0]);
+              return (
+                <span key={p} className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  active ? "border-primary bg-primary/20 text-primary" : "border-border/40 text-muted-foreground"
+                }`}>{p}</span>
+              );
+            })}
+          </div>
         </Card>
       )}
 
