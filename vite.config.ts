@@ -11,6 +11,16 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    // ✅ Proxy SerpAPI calls to avoid CORS — browser calls /api/serpapi/...
+    // Vite forwards it to serpapi.com server-side (no CORS issue)
+    proxy: {
+      "/api/serpapi": {
+        target: "https://serpapi.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/serpapi/, ""),
+        secure: true,
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

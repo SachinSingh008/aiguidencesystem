@@ -11,16 +11,20 @@ const REQUIRED = 80; // target proficiency for all skills
 export default function SkillGap() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const { getSkillScore, loading } = useProgress();
+  const { skillScores, loading } = useProgress();
 
-  const skillGaps = (profile?.current_skills || []).map((skill) => {
-    const current = getSkillScore(skill); // 0 until a test is taken
-    const status =
-      current >= REQUIRED ? "complete" :
-      current > 0        ? "in-progress" :
-                           "missing";
-    return { skill, current, required: REQUIRED, status };
-  });
+  const skillGaps = [
+    ...(profile?.current_skills || []).map((skill) => {
+      const current = skillScores[skill] !== undefined ? skillScores[skill] : 35;
+      const status = current >= REQUIRED ? "complete" : current > 0 ? "in-progress" : "missing";
+      return { skill, current, required: REQUIRED, status, type: "Skill" };
+    }),
+    ...(profile?.interests || []).map((interest) => {
+      const current = skillScores[interest] !== undefined ? skillScores[interest] : 0;
+      const status = current >= REQUIRED ? "complete" : current > 0 ? "in-progress" : "missing";
+      return { skill: interest, current, required: REQUIRED, status, type: "Interest" };
+    })
+  ];
 
   const missing    = skillGaps.filter((s) => s.status === "missing").length;
   const inProgress = skillGaps.filter((s) => s.status === "in-progress").length;
@@ -46,7 +50,7 @@ export default function SkillGap() {
         </Card>
       ) : skillGaps.length === 0 ? (
         <Card className="glass-card p-12 border-border/50 text-center">
-          <p className="text-muted-foreground">No skills in your profile yet. Add skills in Settings to see your gap analysis.</p>
+          <p className="text-muted-foreground">No skills or interests in your profile yet. Add them in Settings to see your gap analysis.</p>
         </Card>
       ) : (
         <>
@@ -87,13 +91,11 @@ export default function SkillGap() {
             </Card>
           </div>
 
-          {/* Tip banner when all are 0 */}
-          {missing === skillGaps.length && (
-            <Card className="glass-card p-4 border-primary/30 bg-primary/5 flex items-center gap-3">
-              <ClipboardCheck className="w-5 h-5 text-primary flex-shrink-0" />
-              <p className="text-sm">Take mock tests to see your skill proficiency grow here. Each test result automatically updates the relevant skills.</p>
-            </Card>
-          )}
+          {/* Tip banner */}
+          <Card className="glass-card p-4 border-primary/30 bg-primary/5 flex items-center gap-3 mb-6">
+            <ClipboardCheck className="w-5 h-5 text-primary flex-shrink-0" />
+            <p className="text-sm">Give a mock test to increase your score! Each test result automatically updates the relevant skills.</p>
+          </Card>
 
           {/* Chart */}
           <Card className="glass-card p-6 border-border/50">
@@ -107,7 +109,6 @@ export default function SkillGap() {
                   contentStyle={{ background: "var(--background)", border: "1px solid var(--border)", borderRadius: 8 }}
                   formatter={(val: number, name: string) => [`${val}%`, name === "current" ? "You" : "Required"]}
                 />
-                <Bar dataKey="required" name="required" fill="var(--muted)" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="current" name="current" radius={[4, 4, 0, 0]}>
                   {skillGaps.slice(0, 8).map((s, i) => (
                     <Cell
@@ -122,7 +123,6 @@ export default function SkillGap() {
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#22c55e] inline-block" /> Mastered (≥80%)</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#f59e0b] inline-block" /> In Progress</span>
               <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[#ef4444] inline-block" /> Not Started</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--muted)] inline-block" /> Required Level</span>
             </div>
           </Card>
 
@@ -131,15 +131,16 @@ export default function SkillGap() {
             <h2 className="text-xl font-bold mb-5">Detailed Skill Analysis</h2>
             <div className="space-y-5">
               {skillGaps.map((s, i) => (
-                <div key={s.skill} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                <div key={`${s.skill}-${s.type}`} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                   <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{s.skill}</span>
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{s.type}</span>
                       {s.status === "complete"   && <CheckCircle2 className="w-4 h-4 text-success" />}
                       {s.status === "missing"    && <AlertCircle  className="w-4 h-4 text-destructive" />}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground">{s.current}% / {s.required}%</span>
+                      <span className="text-sm font-bold text-foreground">{s.current}%</span>
                       {s.status !== "complete" && (
                         <div className="flex gap-1.5">
                           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => navigate("/courses")}>
@@ -153,7 +154,6 @@ export default function SkillGap() {
                     </div>
                   </div>
                   <div className="relative h-2.5 bg-secondary rounded-full overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 bg-border" style={{ width: `${s.required}%` }} />
                     <div
                       className={`absolute inset-y-0 left-0 rounded-full transition-all ${
                         s.status === "complete"   ? "bg-gradient-to-r from-success to-success" :

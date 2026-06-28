@@ -72,7 +72,9 @@ export default function MockTests() {
         // Update skill scores for all skills that match this test's topic
         const testTopic = (activeTest.topic || "").toLowerCase();
         const profileSkills: string[] = profile?.current_skills || [];
-        const matchedSkills = profileSkills.filter((skill) =>
+        const profileInterests: string[] = profile?.interests || [];
+        const allTracked = [...profileSkills, ...profileInterests];
+        const matchedSkills = allTracked.filter((skill) =>
           testTopic.includes(skill.toLowerCase()) ||
           skill.toLowerCase().includes(testTopic) ||
           // Broad topic matches
@@ -84,19 +86,32 @@ export default function MockTests() {
         );
 
         // If no specific match, apply to the first 2 profile skills as a general score
-        const skillsToUpdate = matchedSkills.length > 0 ? matchedSkills : profileSkills.slice(0, 2);
+        const skillsToUpdate = matchedSkills.length > 0 ? matchedSkills : allTracked.slice(0, 2);
 
         await Promise.all(
-          skillsToUpdate.map((skill) =>
-            upsert({
+          skillsToUpdate.map((skill) => {
+            const existingSkill = items.find(i => i.item_type === "skill_score" && i.item_id === skill);
+            const prevCount = existingSkill?.metadata?.testCount || 0;
+            const prevTotal = existingSkill?.metadata?.totalScore || 0;
+            
+            const newCount = prevCount + 1;
+            const newTotal = prevTotal + pct;
+            const newAvg = Math.round(newTotal / newCount);
+
+            return upsert({
               item_type: "skill_score",
               item_id: skill,
               item_name: skill,
-              progress: pct,
-              completed: pct >= 80,
-              metadata: { lastTestTitle: activeTest.title, lastTestTopic: activeTest.topic },
-            })
-          )
+              progress: newAvg,
+              completed: newAvg >= 80,
+              metadata: { 
+                lastTestTitle: activeTest.title, 
+                lastTestTopic: activeTest.topic,
+                testCount: newCount,
+                totalScore: newTotal
+              },
+            });
+          })
         );
 
         toast.success(`Test saved: ${pct}%`);
@@ -215,7 +230,10 @@ export default function MockTests() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {tests.map((t, i) => (
             <Card key={t.id} className="glass-card p-5 border-border/50 glow-hover animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-              <Badge variant="outline" className="mb-3">{t.difficulty}</Badge>
+              <div className="flex gap-2 mb-3 flex-wrap">
+                <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary">{t.topic}</Badge>
+                <Badge variant="outline" className="opacity-70">{t.difficulty}</Badge>
+              </div>
               <h3 className="font-bold text-lg">{t.title}</h3>
               <div className="flex gap-4 text-xs text-muted-foreground mt-3">
                 <span className="flex items-center gap-1"><FileQuestion className="w-3 h-3" /> {t.questions.length} Qs</span>

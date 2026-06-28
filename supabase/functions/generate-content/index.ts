@@ -351,7 +351,7 @@ const PART_PROMPTS: Record<number, (ctx: string) => string> = {
   3: (ctx) =>
     `Student: ${ctx}\n\n` +
     `Return ONLY a JSON object containing exactly one key "mockTests".\n` +
-    `"mockTests" must be an array of EXACTLY 10 mock tests covering diverse topics for this student's branch.\n` +
+    `"mockTests" must be an array of EXACTLY 10 mock tests. ENSURE that the mock tests specifically cover the student's listed "Skills" as well as their "Interests".\n` +
     `Each mock test must have EXACTLY 5 questions.\n` +
     `Vary difficulty: 3 Beginner, 4 Intermediate, 3 Advanced.\n` +
     `Example format:\n` +

@@ -4,36 +4,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Download, Sparkles, FileText } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProgress } from "@/hooks/useProgress";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
 export default function Resume() {
   const { profile } = useAuth();
+  const { items: progressItems } = useProgress();
   const [data, setData] = useState({
     name: "",
     email: "",
     phone: "+91 98765 43210",
     summary: "Aspiring engineer with strong fundamentals and a passion for building real-world solutions.",
     skills: "",
-    experience: "Intern at TechCorp (2024)\n- Built ML models for predictive analytics\n- Improved model accuracy by 23%",
-    projects: "1. Smart Resume Parser using NLP\n2. Real-time Object Detection App\n3. E-commerce Recommendation Engine",
+    experience: "",
+    projects: "",
     education: "B.Tech, XYZ University (2022-2026), CGPA: 8.7",
   });
 
   useEffect(() => {
     if (profile) {
-      setData((d) => ({
-        ...d,
-        name: d.name || profile.full_name || "",
-        email: d.email || profile.email || "",
-        skills: d.skills || (profile.current_skills || []).join(", "),
-        education: d.education || `${profile.branch ?? ""} ${profile.year ?? ""} ${profile.college ? `, ${profile.college}` : ""}`.trim() || d.education,
-        summary: d.summary || (profile.career_goal ? `Aspiring ${profile.career_goal}. ${d.summary}` : d.summary),
-      }));
+      const resumeData = (progressItems.find(i => i.item_type === "resume_data")?.metadata as any) || {};
+      
+      setData((d) => {
+        const branchYear = `${profile.branch ?? ""} ${profile.year ?? ""}`.trim();
+        const collegeExt = profile.college ? `, ${profile.college}` : "";
+        const durExt = resumeData.college_duration ? `, ${resumeData.college_duration}` : "";
+        const collegePercent = resumeData.college_percent ? ` (CGPA/Percentage: ${resumeData.college_percent})` : "";
+        let defaultEdu = `${branchYear}${collegeExt}${durExt}${collegePercent}`.trim();
+
+        if (Array.isArray(resumeData.past_education)) {
+          resumeData.past_education.forEach((edu: any) => {
+            if (edu.type && edu.school) {
+              defaultEdu += `\n${edu.type} - ${edu.school}${edu.percentage ? ` (${edu.percentage})` : ""}`;
+            }
+          });
+        }
+
+        return {
+          ...d,
+          name: d.name || profile.full_name || "",
+          email: d.email || profile.email || "",
+          phone: resumeData.phone || d.phone,
+          skills: d.skills || (profile.current_skills || []).join(", "),
+          education: d.education === "B.Tech, XYZ University (2022-2026), CGPA: 8.7" ? (defaultEdu || d.education) : d.education,
+          summary: d.summary === "Aspiring engineer with strong fundamentals and a passion for building real-world solutions." 
+            ? (profile.career_goal ? `Aspiring ${profile.career_goal}. ${d.summary}` : d.summary) 
+            : d.summary,
+          experience: resumeData.experience || "",
+          projects: resumeData.projects || "",
+        };
+      });
     }
-  }, [profile]);
+  }, [profile, progressItems]);
 
   const downloadPdf = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -77,31 +102,25 @@ export default function Resume() {
     sectionHeader("Summary");
     writeLine(data.summary);
 
+    sectionHeader("Education");
+    writeLine(data.education);
+
     sectionHeader("Skills");
     writeLine(data.skills);
 
-    sectionHeader("Experience");
-    writeLine(data.experience);
+    if (data.experience) {
+      sectionHeader("Experience");
+      writeLine(data.experience);
+    }
 
-    sectionHeader("Projects");
-    writeLine(data.projects);
-
-    sectionHeader("Education");
-    writeLine(data.education);
+    if (data.projects) {
+      sectionHeader("Projects");
+      writeLine(data.projects);
+    }
 
     const filename = `${(data.name || "resume").replace(/\s+/g, "_")}_resume.pdf`;
     doc.save(filename);
     toast.success("Resume downloaded as PDF");
-  };
-
-  const aiEnhance = () => {
-    setData((d) => ({
-      ...d,
-      summary: d.summary
-        ? d.summary
-        : "Results-driven engineering student with proven ability to deliver impactful projects in cross-functional teams.",
-    }));
-    toast.success("AI suggestions applied!");
   };
 
   return (
@@ -112,9 +131,6 @@ export default function Resume() {
           <p className="text-muted-foreground mt-1">ATS-friendly resume tailored to your career path</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={aiEnhance}>
-            <Sparkles className="w-4 h-4 mr-2" /> AI Enhance
-          </Button>
           <Button onClick={downloadPdf} className="bg-gradient-primary">
             <Download className="w-4 h-4 mr-2" /> Download PDF
           </Button>
@@ -146,6 +162,10 @@ export default function Resume() {
             <p className="text-sm">{data.summary}</p>
           </section>
           <section className="mt-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Education</h2>
+            <p className="text-sm whitespace-pre-line">{data.education}</p>
+          </section>
+          <section className="mt-4">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Skills</h2>
             <div className="flex flex-wrap gap-1.5">
               {data.skills.split(",").map((s, i) => s.trim() && (
@@ -153,18 +173,18 @@ export default function Resume() {
               ))}
             </div>
           </section>
-          <section className="mt-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Experience</h2>
-            <p className="text-sm whitespace-pre-line">{data.experience}</p>
-          </section>
-          <section className="mt-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Projects</h2>
-            <p className="text-sm whitespace-pre-line">{data.projects}</p>
-          </section>
-          <section className="mt-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Education</h2>
-            <p className="text-sm whitespace-pre-line">{data.education}</p>
-          </section>
+          {data.experience && (
+            <section className="mt-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Experience</h2>
+              <p className="text-sm whitespace-pre-line">{data.experience}</p>
+            </section>
+          )}
+          {data.projects && (
+            <section className="mt-4">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">Projects</h2>
+              <p className="text-sm whitespace-pre-line">{data.projects}</p>
+            </section>
+          )}
         </Card>
       </div>
     </div>

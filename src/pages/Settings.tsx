@@ -9,9 +9,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Moon, Sun, LogOut } from "lucide-react";
+import { Loader2, Moon, Sun, LogOut, X, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAIContent } from "@/hooks/useAIContent";
+import { useProgress } from "@/hooks/useProgress";
+import { Textarea } from "@/components/ui/textarea";
 
 const BRANCHES = ["Computer Engineering", "Information Technology", "Mechanical Engineering", "Civil Engineering", "Electrical Engineering", "Electronics & Communication", "Chemical Engineering", "Other"];
 const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "Recent Graduate"];
@@ -25,10 +27,14 @@ export default function Settings() {
   const [form, setForm] = useState({
     full_name: "", branch: "", year: "", college: "",
     current_skills: "", interests: "", career_goal: "",
+    phone: "", college_duration: "", experience: "", projects: "",
+    college_percent: "", past_education: [] as { type: string; school: string; percentage: string }[]
   });
+  const { upsert: upsertProgress, items: progressItems } = useProgress();
 
   useEffect(() => {
     if (profile) {
+      const resumeData = (progressItems.find(i => i.item_type === "resume_data")?.metadata as any) || {};
       setForm({
         full_name: profile.full_name || "",
         branch: profile.branch || "",
@@ -37,9 +43,15 @@ export default function Settings() {
         current_skills: (profile.current_skills || []).join(", "),
         interests: (profile.interests || []).join(", "),
         career_goal: profile.career_goal || "",
+        phone: resumeData.phone || "",
+        college_duration: resumeData.college_duration || "",
+        experience: resumeData.experience || "",
+        projects: resumeData.projects || "",
+        college_percent: resumeData.college_percent || "",
+        past_education: resumeData.past_education || []
       });
     }
-  }, [profile]);
+  }, [profile, progressItems]);
 
   const save = async () => {
     if (!user) return;
@@ -56,6 +68,20 @@ export default function Settings() {
     if (error) {
       toast.error("Save failed");
     } else {
+      // Save resume details to user_progress
+      await upsertProgress({
+        item_type: "resume_data",
+        item_id: "user_resume_details",
+        metadata: {
+          phone: form.phone,
+          college_duration: form.college_duration,
+          experience: form.experience,
+          projects: form.projects,
+          college_percent: form.college_percent,
+          past_education: form.past_education
+        }
+      });
+
       // Reset all personalised data so everything regenerates for the new profile
       clearCache();
       await Promise.all([
@@ -96,7 +122,8 @@ export default function Settings() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div><Label>Full Name</Label><Input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} className="mt-1.5" /></div>
-          <div><Label>College</Label><Input value={form.college} onChange={e => setForm({...form, college: e.target.value})} className="mt-1.5" /></div>
+          <div><Label>Phone Number</Label><Input placeholder="+91 98765 43210" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="mt-1.5" /></div>
+          <div><Label>College / University Name</Label><Input value={form.college} onChange={e => setForm({...form, college: e.target.value})} className="mt-1.5" /></div>
           <div>
             <Label>Branch</Label>
             <Select value={form.branch} onValueChange={v => setForm({...form, branch: v})}>
@@ -111,7 +138,60 @@ export default function Settings() {
               <SelectContent>{YEARS.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          <div><Label>College Duration</Label><Input placeholder="e.g. 2022-2026" value={form.college_duration} onChange={e => setForm({...form, college_duration: e.target.value})} className="mt-1.5" /></div>
+          <div><Label>College Percentage/CGPA</Label><Input placeholder="e.g. 8.5 CGPA" value={form.college_percent} onChange={e => setForm({...form, college_percent: e.target.value})} className="mt-1.5" /></div>
         </div>
+
+        {form.past_education.length > 0 && (
+          <div className="space-y-4 mt-6">
+            <h3 className="font-semibold text-md text-slate-800">Past Education</h3>
+            {form.past_education.map((edu, idx) => (
+              <div key={idx} className="flex flex-col sm:flex-row gap-3 items-end p-3 rounded-lg border border-border/50 bg-secondary/20">
+                <div className="flex-1 w-full">
+                  <Label className="text-xs">Type</Label>
+                  <Select value={edu.type} onValueChange={(v) => {
+                    const next = [...form.past_education];
+                    next[idx].type = v;
+                    setForm({ ...form, past_education: next });
+                  }}>
+                    <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Class 10">Class 10</SelectItem>
+                      <SelectItem value="Class 12">Class 12</SelectItem>
+                      <SelectItem value="Diploma">Diploma</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-[2] w-full">
+                  <Label className="text-xs">School / College Name</Label>
+                  <Input value={edu.school} onChange={(e) => {
+                    const next = [...form.past_education];
+                    next[idx].school = e.target.value;
+                    setForm({ ...form, past_education: next });
+                  }} className="mt-1 h-9 text-sm" placeholder="School Name" />
+                </div>
+                <div className="flex-1 w-full">
+                  <Label className="text-xs">Percentage</Label>
+                  <Input value={edu.percentage} onChange={(e) => {
+                    const next = [...form.past_education];
+                    next[idx].percentage = e.target.value;
+                    setForm({ ...form, past_education: next });
+                  }} className="mt-1 h-9 text-sm" placeholder="e.g. 90%" />
+                </div>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                  onClick={() => setForm({ ...form, past_education: form.past_education.filter((_, i) => i !== idx) })}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        {form.past_education.length < 3 && (
+          <Button type="button" variant="outline" size="sm" className="mt-4"
+            onClick={() => setForm({ ...form, past_education: [...form.past_education, { type: "", school: "", percentage: "" }] })}>
+            <Plus className="w-4 h-4 mr-2 inline" /> Add Past Education
+          </Button>
+        )}
         <div className="mt-4">
           <Label>Skills (comma-separated)</Label>
           <Input value={form.current_skills} onChange={e => setForm({...form, current_skills: e.target.value})} className="mt-1.5" />
@@ -123,6 +203,20 @@ export default function Settings() {
         <div className="mt-4">
           <Label>Career Goal</Label>
           <Input value={form.career_goal} onChange={e => setForm({...form, career_goal: e.target.value})} className="mt-1.5" />
+        </div>
+        
+        <div className="mt-6 border-t border-border/50 pt-6">
+          <h3 className="font-semibold text-lg mb-4">Resume Details (Optional)</h3>
+          <div className="space-y-4">
+            <div>
+              <Label>Experience</Label>
+              <Textarea placeholder="E.g., Intern at TechCorp (2024)..." rows={3} value={form.experience} onChange={e => setForm({...form, experience: e.target.value})} className="mt-1.5" />
+            </div>
+            <div>
+              <Label>Projects</Label>
+              <Textarea placeholder="E.g., 1. Smart Resume Parser using NLP..." rows={3} value={form.projects} onChange={e => setForm({...form, projects: e.target.value})} className="mt-1.5" />
+            </div>
+          </div>
         </div>
         <Button onClick={save} disabled={saving} className="mt-6 bg-gradient-primary">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}

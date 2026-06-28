@@ -5,10 +5,10 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Career Paths", url: "/career-paths", icon: Compass },
-  { title: "Skill Gap", url: "/skill-gap", icon: Target },
   { title: "Courses", url: "/courses", icon: BookOpen },
   { title: "Study Material", url: "/study-material", icon: Library },
   { title: "Resume Builder", url: "/resume", icon: FileText },
+  { title: "Skill Gap", url: "/skill-gap", icon: Target },
   { title: "Mock Tests", url: "/mock-tests", icon: ClipboardCheck },
   { title: "Progress", url: "/progress", icon: TrendingUp },
   { title: "Settings", url: "/settings", icon: Settings },

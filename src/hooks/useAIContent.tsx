@@ -5,6 +5,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { getFallbackContent } from "./aiFallback";
+import { COURSE_CATALOG } from "@/lib/courseCatalog";
+import { resolveExactStudyMaterialUrl } from "@/lib/serpapi";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 export type AICourse = {
@@ -71,7 +73,7 @@ async function groqRequest(prompt: string, maxTokens: number): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      model: "llama-3.1-8b-instant",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.5,
       max_tokens: maxTokens,
@@ -131,7 +133,8 @@ async function runPhase<T>(name: string, fn: () => Promise<T>, maxRetries = 2): 
       return await fn();
     } catch (err: any) {
       const isLast = attempt > maxRetries;
-      const backoff = err.message === "RATE_LIMIT" ? attempt * 5000 : attempt * 2000;
+      // Exponential backoff for rate limits: 10s, then 20s
+      const backoff = err.message === "RATE_LIMIT" ? attempt * 10000 : attempt * 3000;
       console.warn(`[${name}] Attempt ${attempt} failed: ${err.message}.${isLast ? " Giving up." : ` Retry in ${backoff}ms…`}`);
       if (!isLast) await delay(backoff);
     }
@@ -140,132 +143,102 @@ async function runPhase<T>(name: string, fn: () => Promise<T>, maxRetries = 2): 
   return null;
 }
 
-// ─── PHASE 1: COURSES ─────────────────────────────────────────────────────────
+// ─── CATALOG MATCHER ──────────────────────────────────────────────────────────
+function stringSimilarity(a: string, b: string): number {
+  const s = a.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+  const t = b.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+  if (s === t) return 1;
+  if (!s || !t) return 0;
+  const sw = new Set(s.split(" "));
+  const tw = t.split(" ");
+  const matches = tw.filter((w) => sw.has(w)).length;
+  return (2 * matches) / (sw.size + tw.length);
+}
+
+// ≥98% match → real catalog URL; else → Coursera/Udemy search (always valid)
+function resolveUrlFromCatalog(title: string, platform: string): string {
+  let best = 0, bestUrl = "";
+  for (const c of COURSE_CATALOG) {
+    const sim = stringSimilarity(title, c.title);
+    if (sim > best) { best = sim; bestUrl = c.url; }
+  }
+  if (best >= 0.98) {
+    console.log(`[Catalog] ✅ ${Math.round(best * 100)}% match → "${title}"`);
+    return bestUrl;
+  }
+  const q = encodeURIComponent(title);
+  return (platform || "").toLowerCase().includes("udemy")
+    ? `https://www.udemy.com/courses/search/?q=${q}`
+    : `https://www.coursera.org/search?query=${q}`;
+}
+
+// ─── PHASE 1: COURSES (hybrid: AI titles + catalog/search URL) ────────────────
 async function generateCourses(p: Profile): Promise<AICourse[]> {
-  const prompt = `Act as a Senior Career & Technical Advisor for Indian engineering students. Return ONLY valid JSON.
+  const prompt = `You are a Senior Career Advisor for Indian engineering students. Return ONLY valid JSON.
 
 Student: ${p.branch}, Year ${p.year}, Skills: ${p.skills.join(", ") || "None"}, Interests: ${p.interests.join(", ") || "None"}
 
-Return exactly 6 highly rated, industry-recognized courses from Coursera or Udemy only.
-Organize them to cover Absolute Beginners, Advanced/Automation, and Bootcamps.
+Return exactly 6 highly relevant courses from Coursera or Udemy only.
+Cover: 2 Beginner, 2 Intermediate, 1 Advanced, 1 Bootcamp.
+Provide ONLY: title, platform ("Coursera" or "Udemy"), instructor, duration, difficulty, description, careerRelevance.
+DO NOT include a url field.
 
-DO NOT include a url field. Only provide: title, platform (Coursera or Udemy), instructor, duration, difficulty, description, careerRelevance.
+{"courses":[{"title":"","platform":"Coursera","instructor":"","duration":"","difficulty":"Beginner","description":"","careerRelevance":""}]}`;
 
-{"courses":[{"title":"","platform":"Coursera|Udemy","instructor":"","duration":"","difficulty":"Beginner|Intermediate|Advanced","description":"","careerRelevance":""}]}`;
-
-  const raw = await smartRequest(prompt, 1500);
-  const obj = JSON.parse(raw);
-  const arr: any[] = obj?.courses ?? (Array.isArray(obj) ? obj : []);
-  if (arr.length < 3) throw new Error("Too few courses");
-  
-  return arr.slice(0, 8).map(c => {
-    // Always build a guaranteed search URL — never trust AI-generated links
-    const query = encodeURIComponent(`${c.title} ${c.instructor}`.trim());
-    const url = (c.platform || "").toLowerCase().includes("coursera")
-      ? `https://www.coursera.org/search?query=${query}`
-      : `https://www.udemy.com/courses/search/?q=${query}`;
-    return { ...c, url };
-  });
-}
-
-// ─── KNOWN DOCUMENTATION URLS (100% verified, never 404) ────────────────────
-const KNOWN_DOCS: Record<string, { url: string; type: string }> = {
-  // Web & JS
-  "javascript":       { url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript", type: "Documentation" },
-  "html":             { url: "https://developer.mozilla.org/en-US/docs/Web/HTML", type: "Documentation" },
-  "css":              { url: "https://developer.mozilla.org/en-US/docs/Web/CSS", type: "Documentation" },
-  "typescript":       { url: "https://www.typescriptlang.org/docs/", type: "Documentation" },
-  "react":            { url: "https://react.dev", type: "Documentation" },
-  "nodejs":           { url: "https://nodejs.org/en/docs", type: "Documentation" },
-  "expressjs":        { url: "https://expressjs.com/en/4x/api.html", type: "Documentation" },
-  "vuejs":            { url: "https://vuejs.org/guide/introduction", type: "Documentation" },
-  "angular":          { url: "https://angular.io/docs", type: "Documentation" },
-  "nextjs":           { url: "https://nextjs.org/docs", type: "Documentation" },
-  "tailwindcss":      { url: "https://tailwindcss.com/docs", type: "Documentation" },
-  "bootstrap":        { url: "https://getbootstrap.com/docs/", type: "Documentation" },
-  "graphql":          { url: "https://graphql.org/learn/", type: "Documentation" },
-  // Python
-  "python":           { url: "https://docs.python.org/3/", type: "Documentation" },
-  "django":           { url: "https://docs.djangoproject.com/en/stable/", type: "Documentation" },
-  "flask":            { url: "https://flask.palletsprojects.com/", type: "Documentation" },
-  "fastapi":          { url: "https://fastapi.tiangolo.com/", type: "Documentation" },
-  "numpy":            { url: "https://numpy.org/doc/stable/", type: "Documentation" },
-  "pandas":           { url: "https://pandas.pydata.org/docs/", type: "Documentation" },
-  "matplotlib":       { url: "https://matplotlib.org/stable/contents.html", type: "Documentation" },
-  "scikit-learn":     { url: "https://scikit-learn.org/stable/documentation.html", type: "Documentation" },
-  "tensorflow":       { url: "https://www.tensorflow.org/api_docs", type: "Documentation" },
-  "pytorch":          { url: "https://pytorch.org/docs/stable/index.html", type: "Documentation" },
-  // Databases
-  "sql":              { url: "https://dev.mysql.com/doc/refman/8.0/en/", type: "Documentation" },
-  "mysql":            { url: "https://dev.mysql.com/doc/refman/8.0/en/", type: "Documentation" },
-  "postgresql":       { url: "https://www.postgresql.org/docs/current/", type: "Documentation" },
-  "mongodb":          { url: "https://www.mongodb.com/docs/manual/", type: "Documentation" },
-  "redis":            { url: "https://redis.io/docs/", type: "Documentation" },
-  // DevOps & Cloud
-  "docker":           { url: "https://docs.docker.com/", type: "Documentation" },
-  "kubernetes":       { url: "https://kubernetes.io/docs/home/", type: "Documentation" },
-  "git":              { url: "https://git-scm.com/doc", type: "Documentation" },
-  "github":           { url: "https://docs.github.com/en", type: "Documentation" },
-  "aws":              { url: "https://docs.aws.amazon.com/", type: "Documentation" },
-  "linux":            { url: "https://man7.org/linux/man-pages/", type: "Documentation" },
-  "bash":             { url: "https://www.gnu.org/software/bash/manual/", type: "Documentation" },
-  // Java / JVM
-  "java":             { url: "https://docs.oracle.com/en/java/", type: "Documentation" },
-  "spring":           { url: "https://spring.io/projects/spring-boot", type: "Documentation" },
-  "kotlin":           { url: "https://kotlinlang.org/docs/", type: "Documentation" },
-  // Systems & other languages
-  "c":                { url: "https://en.cppreference.com/w/c", type: "Documentation" },
-  "cpp":              { url: "https://en.cppreference.com/w/", type: "Documentation" },
-  "c++":              { url: "https://en.cppreference.com/w/", type: "Documentation" },
-  "go":               { url: "https://go.dev/doc/", type: "Documentation" },
-  "rust":             { url: "https://doc.rust-lang.org/book/", type: "Documentation" },
-  "php":              { url: "https://www.php.net/docs.php", type: "Documentation" },
-  // Mobile
-  "android":          { url: "https://developer.android.com/docs", type: "Documentation" },
-  "swift":            { url: "https://developer.apple.com/documentation/", type: "Documentation" },
-  // Engineering tools
-  "matlab":           { url: "https://www.mathworks.com/help/matlab/", type: "Documentation" },
-  "autocad":          { url: "https://help.autodesk.com/view/ACD/2024/ENU/", type: "Documentation" },
-  // Interview & placement
-  "dsa":              { url: "https://www.geeksforgeeks.org/data-structures/", type: "Notes" },
-  "geeksforgeeks":    { url: "https://www.geeksforgeeks.org/", type: "Notes" },
-  "leetcode":         { url: "https://leetcode.com/problemset/", type: "Notes" },
-  "techinterviewhandbook": { url: "https://www.techinterviewhandbook.org/", type: "eBook" },
-};
-
-function resolveDocUrl(title: string, subject: string): { url: string; type: string } {
-  const needle = `${title} ${subject}`.toLowerCase().replace(/[^a-z0-9+]/g, "");
-  for (const [key, val] of Object.entries(KNOWN_DOCS)) {
-    if (needle.includes(key.replace(/[^a-z0-9]/g, ""))) return val;
+  try {
+    const raw = await smartRequest(prompt, 1500);
+    const obj = JSON.parse(raw);
+    const arr: any[] = obj?.courses ?? (Array.isArray(obj) ? obj : []);
+    if (arr.length < 3) throw new Error("Too few courses");
+    // ✅ Hybrid: ≥98% catalog match → direct URL, else Coursera/Udemy search URL
+    return arr.slice(0, 6).map((c: any) => ({
+      title: c.title, platform: c.platform, instructor: c.instructor,
+      duration: c.duration, difficulty: c.difficulty,
+      description: c.description, careerRelevance: c.careerRelevance,
+      url: resolveUrlFromCatalog(c.title, c.platform),
+    }));
+  } catch {
+    // AI failed — serve directly from catalog
+    return COURSE_CATALOG
+      .filter((c) => c.branch.some((tag) => p.branch.toLowerCase().includes(tag)))
+      .sort(() => Math.random() - 0.5).slice(0, 6)
+      .map((c) => ({ title: c.title, platform: c.platform, instructor: c.instructor,
+        duration: c.duration, difficulty: c.difficulty, url: c.url,
+        description: c.description, careerRelevance: c.careerRelevance }));
   }
-  // Safe fallback: MDN search (always works)
-  return { url: `https://developer.mozilla.org/en-US/search?q=${encodeURIComponent(title)}`, type: "Documentation" };
 }
 
-// ─── PHASE 2: STUDY MATERIALS ────────────────────────────────────────────────
+// ─── PHASE 2: STUDY MATERIALS (API ONLY) ────────────────────────────────────
 async function generateStudyMaterials(p: Profile): Promise<AIStudyMaterial[]> {
-  const knownTopics = Object.keys(KNOWN_DOCS).join(", ");
-  const prompt = `Act as a Senior Career & Technical Advisor for Indian engineering students. Return ONLY valid JSON.
+  const prompt = `You are a Senior Career Advisor for Indian engineering students. Return ONLY valid JSON.
 
 Student: ${p.branch}, Year ${p.year}, Skills: ${p.skills.join(", ") || "None"}, Interests: ${p.interests.join(", ") || "None"}
 
 Return exactly 5 study resources. DO NOT include a url field — we resolve URLs automatically.
-Choose topics relevant to the student. Prefer topics from this list: ${knownTopics}.
-Only provide: title, type (Documentation|Notes|eBook|Cheat Sheet), subject, description.
+Provide ONLY: title, type (Documentation|Notes|eBook|Cheat Sheet), subject, description.
+Prioritise resources relevant to the student\'s branch and interests.
 
-{"studyMaterials":[{"title":"","type":"Documentation|Notes|eBook|Cheat Sheet","subject":"","description":""}]}`;
+{"studyMaterials":[{"title":"","type":"Notes","subject":"","description":""}]}`;
 
   const raw = await smartRequest(prompt, 1000);
   const obj = JSON.parse(raw);
   const arr: any[] = obj?.studyMaterials ?? (Array.isArray(obj) ? obj : []);
   if (arr.length < 2) throw new Error("Too few materials");
 
-  return arr.slice(0, 6).map(m => {
-    // Always resolve URL from our verified map — AI never sets the URL
-    const resolved = resolveDocUrl(m.title || "", m.subject || "");
-    return { ...m, url: resolved.url, type: m.type || resolved.type };
-  });
+  // 🔍 Use SerpAPI to resolve exact resource URLs.
+  const resolved = await Promise.all(
+    arr.slice(0, 6).map(async (m) => {
+      const serpUrl = await resolveExactStudyMaterialUrl(m.title, m.subject, m.type);
+      return { ...m, url: serpUrl };
+    })
+  );
+
+  return resolved;
 }
+
+
+
+
 
 // ─── PHASE 3: CAREER PATHS ───────────────────────────────────────────────────
 async function generateCareerPaths(p: Profile): Promise<AICareerPath[]> {
@@ -357,23 +330,22 @@ export function AIContentProvider({ children }: { children: ReactNode }) {
     let partial = false;
 
     try {
-      // Phase 1 — Courses
+      // Phase 1 — Courses (AI titles + hybrid catalog/search URL resolution)
       setPhase("Generating Courses...");
       const courses = await runPhase("Courses", () => generateCourses(p));
-      if (!courses) partial = true;
-      await delay(2000);
+      if (!courses || courses.length === 0) partial = true;
 
       // Phase 2 — Study Materials
       setPhase("Generating Study Materials...");
       const studyMaterials = await runPhase("StudyMaterials", () => generateStudyMaterials(p));
       if (!studyMaterials) partial = true;
-      await delay(2000);
+      await delay(4000); // Increased delay between phases
 
       // Phase 3 — Career Paths
       setPhase("Generating Career Paths...");
       const careerPaths = await runPhase("CareerPaths", () => generateCareerPaths(p));
       if (!careerPaths) partial = true;
-      await delay(2000);
+      await delay(4000); // Increased delay between phases
 
       // Phase 4 — Mock Tests
       setPhase("Generating Mock Tests...");
