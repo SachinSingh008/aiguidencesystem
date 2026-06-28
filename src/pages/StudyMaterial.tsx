@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, BookMarked, Book, Video, Code2, ExternalLink, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAIContent } from "@/hooks/useAIContent";
+import { useProgress } from "@/hooks/useProgress";
 
 const typeIcon: Record<string, any> = {
   Notes: FileText,
@@ -21,6 +22,7 @@ const typeColors = [
 export default function StudyMaterial() {
   const { profile } = useAuth();
   const { content, loading, generating, generate } = useAIContent();
+  const { upsert: upsertProgress } = useProgress();
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -59,7 +61,15 @@ export default function StudyMaterial() {
                 <h3 className="font-bold text-base leading-snug">{m.title}</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">{m.description}</p>
                 <p className="text-xs text-muted-foreground font-medium">{m.subject}</p>
-                <a href={m.url} target="_blank" rel="noopener noreferrer" className="mt-auto">
+                <a href={m.url} target="_blank" rel="noopener noreferrer" className="mt-auto" onClick={() => {
+                  upsertProgress({
+                    item_type: "material",
+                    item_id: m.url || m.title,
+                    item_name: m.title,
+                    completed: true,
+                    progress: 100,
+                  });
+                }}>
                   <Button className="w-full bg-gradient-primary hover:opacity-90" size="sm">
                     Open Resource <ExternalLink className="w-3 h-3 ml-2" />
                   </Button>

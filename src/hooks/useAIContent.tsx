@@ -106,7 +106,7 @@ async function geminiRequest(prompt: string, maxTokens: number): Promise<string>
 }
 
 // ─── SMART REQUEST: Groq → Gemini ─────────────────────────────────────────────
-async function smartRequest(prompt: string, maxTokens: number): Promise<string> {
+export async function smartRequest(prompt: string, maxTokens: number): Promise<string> {
   // Try Groq first
   if (GROQ_KEY) {
     try {

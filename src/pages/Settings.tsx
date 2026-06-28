@@ -53,6 +53,7 @@ export default function Settings() {
     }
   }, [profile, progressItems]);
 
+
   const save = async () => {
     if (!user) return;
     setSaving(true);
@@ -82,14 +83,8 @@ export default function Settings() {
         }
       });
 
-      // Reset all personalised data so everything regenerates for the new profile
-      clearCache();
-      await Promise.all([
-        supabase.from("user_progress").delete().eq("user_id", user.id),
-        supabase.from("chat_history").delete().eq("user_id", user.id),
-      ]);
       await refreshProfile();
-      toast.success("Profile saved — regenerating personalised content…");
+      toast.success("Profile saved successfully");
     }
     setSaving(false);
   };

@@ -51,10 +51,11 @@ export default function Onboarding() {
     phone: "", college_duration: "", experience: "", projects: "",
     college_percent: "", past_education: [] as { type: string; school: string; percentage: string }[]
   });
-  const { upsert: upsertProgress, items: progressItems } = useProgress();
+  const { upsert: upsertProgress, items: progressItems, loading: progressLoading } = useProgress();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !progressLoading && !initialized) {
       const resumeData = (progressItems.find(i => i.item_type === "resume_data")?.metadata as any) || {};
       setForm({
         full_name: profile.full_name || "",
@@ -71,8 +72,10 @@ export default function Onboarding() {
         college_percent: resumeData.college_percent || "",
         past_education: resumeData.past_education || []
       });
+      setInitialized(true);
     }
-  }, [profile, progressItems]);
+  }, [profile, progressItems, progressLoading, initialized]);
+
 
   if (!loading && !user) return <Navigate to="/auth" replace />;
   if (!loading && profile?.onboarded && !isReconfigure) return <Navigate to="/dashboard" replace />;

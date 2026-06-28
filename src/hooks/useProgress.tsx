@@ -58,25 +58,27 @@ export function useProgress() {
       // try to find existing
       const { data: existing } = await supabase
         .from("user_progress")
-        .select("id")
+        .select("id, metadata")
         .eq("user_id", user.id)
         .eq("item_type", data.item_type)
         .eq("item_id", data.item_id)
         .maybeSingle();
 
       if (existing) {
-        await supabase
+        const mergedMetadata = { ...(existing.metadata as object || {}), ...(data.metadata || {}) };
+        const { error } = await supabase
           .from("user_progress")
           .update({
             item_name: data.item_name,
             progress: data.progress ?? 0,
             completed: data.completed ?? false,
-            metadata: data.metadata ?? {},
+            metadata: mergedMetadata,
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
+        if (error) console.error("Error updating progress:", error);
       } else {
-        await supabase.from("user_progress").insert({
+        const { error } = await supabase.from("user_progress").insert({
           user_id: user.id,
           item_type: data.item_type,
           item_id: data.item_id,
@@ -85,6 +87,7 @@ export function useProgress() {
           completed: data.completed ?? false,
           metadata: data.metadata ?? {},
         });
+        if (error) console.error("Error inserting progress:", error);
       }
     },
     [user],
