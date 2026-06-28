@@ -123,7 +123,8 @@ export default function Onboarding() {
       onboarded: true,
     }).eq("user_id", user.id);
     if (error) {
-      toast.error("Failed to save profile");
+      toast.error(`Failed to save profile: ${error.message}`);
+      console.error("Profile update error:", error);
       setSaving(false);
       return;
     }
@@ -151,7 +152,7 @@ export default function Onboarding() {
     }
     await refreshProfile();
     toast.success(isReconfigure ? "Profile updated — regenerating personalised content…" : "You're all set! Welcome aboard 🚀");
-    navigate("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   return (
